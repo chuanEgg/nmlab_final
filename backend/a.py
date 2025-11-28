@@ -7,7 +7,7 @@ import numpy as np
 picam2 = Picamera2()
 config = picam2.create_preview_configuration(
     main={"format": "RGB888", "size": (4608, 2592)},  # 最大解析度
-    transform=Transform(hflip=True, vflip=True)      # 如果鏡頭倒置
+    transform=Transform(hflip=0, vflip=True)      # 如果鏡頭倒置
 )
 picam2.configure(config)
 picam2.start()
