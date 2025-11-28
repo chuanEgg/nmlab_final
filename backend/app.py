@@ -92,5 +92,16 @@ def update_user(username):
     write_json(all_data)
     
     return jsonify({"message": "Updated", "data": all_data[username]})
+# 功能 4: 刪除玩家資料
+@app.route('/delete/<username>', methods=['DELETE'])
+def delete_user(username):
+    all_data = read_json()
+
+    if username in all_data:
+        deleted_data = all_data.pop(username)
+        write_json(all_data)
+        return jsonify({"message": "User deleted", "data": deleted_data})
+    else:
+        return jsonify({"error": "User not found"}), 404
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8000)
