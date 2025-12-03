@@ -8,6 +8,7 @@ from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 
 import RPi.GPIO as GPIO
+from gpiozero import Servo
 
 MARGIN = 10  # pixels
 ROW_SIZE = 30  # pixels
@@ -79,5 +80,15 @@ def setup_servo():
     tilt_pwm.start(7.5)  # Neutral position
     return pan_pwm, tilt_pwm
 
+def setup_servo_gpiozero():
+    servo_pan = Servo(PAN_PIN)
+    servo_tilt = Servo(TILT_PIN)
+    servo_pan.mid()
+    servo_tilt.mid()
+    return servo_pan, servo_tilt
+
 def angle_to_duty_cycle(angle):
     return 2.5 + (angle / 180.0) * 10
+
+def angle_to_gpiozero_value(angle):
+    return (angle - 90) / 90 + 0.1 # Maps 0-180 to -1 to 1
