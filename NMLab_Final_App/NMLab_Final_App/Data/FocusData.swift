@@ -11,7 +11,8 @@ struct FocusData: Codable, Identifiable {
   let id: String
   let username: String
   let level: Int
-  let playTime: Int
+  /// Raw play-time slices (in seconds) as delivered by the backend.
+  let playTimes: [Int]
   let score: Int
   let sessions: [FocusSession]
 
@@ -19,16 +20,16 @@ struct FocusData: Codable, Identifiable {
     case id = "_id"
     case username
     case level
-    case playTime = "play_time"
+    case playTimes = "play_time"
     case score
     case sessions
   }
 
-  init(id: String, username: String, level: Int, playTime: Int, score: Int, sessions: [FocusSession]) {
+  init(id: String, username: String, level: Int, playTimes: [Int], score: Int, sessions: [FocusSession]) {
     self.id = id
     self.username = username
     self.level = level
-    self.playTime = playTime
+    self.playTimes = playTimes
     self.score = score
     self.sessions = sessions
   }
@@ -38,9 +39,20 @@ struct FocusData: Codable, Identifiable {
     id = try container.decodeIfPresent(String.self, forKey: .id) ?? UUID().uuidString
     username = try container.decode(String.self, forKey: .username)
     level = try container.decodeIfPresent(Int.self, forKey: .level) ?? 0
-    playTime = try container.decodeIfPresent(Int.self, forKey: .playTime) ?? 0
+    playTimes = try container.decodeIfPresent([Int].self, forKey: .playTimes) ?? []
     score = try container.decodeIfPresent(Int.self, forKey: .score) ?? 0
     sessions = try container.decodeIfPresent([FocusSession].self, forKey: .sessions) ?? []
+  }
+
+  /// Aggregated play time (seconds) derived from `playTimes`.
+  var totalPlayTimeSeconds: Int {
+    playTimes.reduce(0, +)
+  }
+
+  /// Returns the most recent `limit` play-time entries (oldest to newest).
+  func recentPlayTimes(limit: Int) -> [Int] {
+    guard limit > 0 else { return [] }
+    return Array(playTimes.suffix(limit))
   }
 }
 

@@ -7,14 +7,14 @@
 
 import SwiftUI
 
-struct HomeView: View {
+struct TaskView: View {
     var body: some View {
         List {
-          Text("Home Page")
+          Text("Task Page")
         }
     }
 }
 
 #Preview {
-    HomeView()
+    TaskView()
 }

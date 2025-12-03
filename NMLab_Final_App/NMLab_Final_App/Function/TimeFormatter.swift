@@ -31,22 +31,26 @@ func formattedUpdateStatus(reference: Date = Date(), lastUpdatedAt: Date?) -> St
   return "Updated \(days) day\(days == 1 ? "" : "s") ago."
 }
 
-// Computes and formats total play time from session durations; falls back to data.playTime when sessions are unavailable.
+// Computes and formats total play time leveraging session data, with a fallback to raw play-time slices.
 func formattedPlayTime(from data: FocusData) -> String {
+  let totalSeconds = totalPlayTimeSeconds(from: data)
+  return formatDuration(totalSeconds)
+}
+
+// Resolves the most reliable play-time total (seconds) for a user.
+func totalPlayTimeSeconds(from data: FocusData) -> TimeInterval {
   // Sum positive session durations (in seconds)
   let totalSecondsFromSessions: TimeInterval = data.sessions.reduce(0) { partial, session in
     let d = session.duration
     return partial + max(0, d)
   }
 
-  // If we have any session-derived time, prefer that; otherwise fallback to raw playTime (assumed minutes)
   if totalSecondsFromSessions > 0 {
-    return formatDuration(totalSecondsFromSessions)
-  } else {
-    // Interpret raw playTime as minutes if sessions are empty
-    let seconds = TimeInterval(data.playTime) * 60
-    return formatDuration(seconds)
+    return totalSecondsFromSessions
   }
+
+  // Fallback to the backend-supplied slices (assumed seconds per segment)
+  return TimeInterval(data.totalPlayTimeSeconds)
 }
 
 // Formats a duration in seconds into a human-friendly string like "1h 24m" or "12m".
@@ -63,3 +67,17 @@ func formatDuration(_ seconds: TimeInterval) -> String {
     return "\(minutes)m"
   }
 }
+
+let sessionDisplayFormatter: DateFormatter = {
+  let formatter = DateFormatter()
+  formatter.dateFormat = "MM/dd HH:mm"
+  formatter.locale = Locale(identifier: "en_US_POSIX")
+  return formatter
+}()
+
+let sessionDurationFormatter: DateComponentsFormatter = {
+  let formatter = DateComponentsFormatter()
+  formatter.allowedUnits = [.hour, .minute]
+  formatter.unitsStyle = .abbreviated
+  return formatter
+  }()
