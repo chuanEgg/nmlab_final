@@ -8,12 +8,7 @@
 import SwiftUI
 
 struct UserDataView: View {
-  @AppStorage("currentUsername") private var username = "Allen"
-  @State private var availableUsers: [String] = []
-  @State private var focusData: FocusData?
-  @State private var statusMessage: String = "Scroll to fetch data."
-  @State private var isLoadingUsers = false
-  @State private var lastUpdatedAt: Date? = nil
+  @StateObject private var dataManager = UserDataManager()
   @State private var hasLoadedOnce = false
 
 
@@ -22,24 +17,20 @@ struct UserDataView: View {
       List {
         Section {
         } header: {
-          Text("Welcome Back, \(username)")
+          Text("Welcome Back, \(dataManager.username)")
             .font(.title2)
             .fontWeight(.semibold)
             .foregroundStyle(Color.primary)
         }
 
         Section("Your Record") {
-          if let focusData {
+          if let focusData = dataManager.focusData {
             VStack(spacing: 16) {
               focusSummaryLabel(for: focusData)
 
               FocusDetailChartView(focusData: focusData)
                 .padding(.horizontal, 8)
                 .padding(.vertical, 3)
-//                .background(
-//                  RoundedRectangle(cornerRadius: 20, style: .continuous)
-//                    .fill(Color(.secondarySystemBackground))
-//                )
             }
 
           } else {
@@ -48,7 +39,7 @@ struct UserDataView: View {
           }
         }
         Section {
-          if let focusData {
+          if let focusData = dataManager.focusData {
             NavigationLink {
               FocusDetailListView(focusData: focusData)
             } label: {
@@ -64,7 +55,7 @@ struct UserDataView: View {
           }
         }
 
-        Section(statusMessage) {
+        Section(dataManager.statusMessage) {
         }
       }
       .navigationTitle("Focus Record")
@@ -72,22 +63,22 @@ struct UserDataView: View {
       .toolbar {
         ToolbarItem(placement: .topBarTrailing) {
           Menu {
-            if isLoadingUsers {
+            if dataManager.isLoadingUsers {
               ProgressView("Loading users...")
-            } else if availableUsers.isEmpty {
+            } else if dataManager.availableUsers.isEmpty {
               Button("No users available", action: {})
                 .disabled(true)
             } else {
-              ForEach(availableUsers, id: \.self) { user in
+              ForEach(dataManager.availableUsers, id: \.self) { user in
                 Button(user) {
-                  switchToUser(user)
+                  dataManager.switchToUser(user)
                 }
               }
             }
             Divider()
             Button {
               Task {
-                await fetchUserList(autoSelect: false)
+                await dataManager.fetchUserList(autoSelect: false)
               }
             } label: {
               Label("Refresh users", systemImage: "arrow.clockwise")
@@ -101,28 +92,17 @@ struct UserDataView: View {
         if !hasLoadedOnce {
           hasLoadedOnce = true
           Task {
-            await initialLoad()
+            await dataManager.initialLoad()
           }
         }
       }
-      .onChange(of: username) { _, _ in
-        fetchData()
+      .onChange(of: dataManager.username) { _, _ in
+        dataManager.fetchData()
       }
       .refreshable {
-        fetchData()
+        dataManager.fetchData()
       }
     }
-  }
-
-  private func initialLoad() async {
-    await fetchUserList(autoSelect: true)
-    fetchData()
-  }
-
-  private func switchToUser(_ newUser: String) {
-    guard username != newUser else { return }
-    username = newUser
-    fetchData()
   }
 
   private func focusDataRows(for data: FocusData) -> [(title: String, value: String)] {
@@ -131,46 +111,6 @@ struct UserDataView: View {
       ("Play Time", formattedPlayTime(from: data)),
       ("Score", "\(data.score)")
     ]
-  }
-
-  private func fetchData() {
-    statusMessage = "Loading..."
-    focusData = nil
-
-    getFocusData(user: username) { result in
-      switch result {
-      case .success(let data):
-        focusData = data
-        lastUpdatedAt = Date()
-        statusMessage = formattedUpdateStatus(lastUpdatedAt: lastUpdatedAt)
-      case .failure(let error):
-        statusMessage = error.localizedDescription
-      }
-    }
-  }
-
-  @MainActor
-  private func fetchUserList(autoSelect: Bool) async {
-    guard !isLoadingUsers else { return }
-    isLoadingUsers = true
-
-    await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
-      getFocusUsers { result in
-        defer {
-          isLoadingUsers = false
-          continuation.resume()
-        }
-        switch result {
-        case .success(let users):
-          availableUsers = users.sorted()
-          if autoSelect, !users.contains(username), let firstUser = users.first {
-            username = firstUser
-          }
-        case .failure(let error):
-          statusMessage = error.localizedDescription
-        }
-      }
-    }
   }
 
   // Formatter for displaying the first session date in the summary
@@ -229,4 +169,5 @@ struct UserDataView: View {
 #Preview {
   UserDataView()
 }
+
 

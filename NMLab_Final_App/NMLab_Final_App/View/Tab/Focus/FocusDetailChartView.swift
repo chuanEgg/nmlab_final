@@ -201,29 +201,6 @@ struct FocusDetailChartView: View {
   }
 }
 
-// MARK: - Badge Helpers
-
-private func infoBadge(dateText: String, valueTitle: String, valueText: String) -> some View {
-    VStack(alignment: .leading, spacing: 2) {
-      Text(valueTitle)
-        .font(.caption.weight(.medium))
-        .foregroundStyle(.secondary)
-      Text(valueText)
-        .font(.title.weight(.semibold))
-        .foregroundStyle(.primary)
-      Text(dateText)
-        .font(.callout.weight(.semibold))
-        .foregroundStyle(.secondary)
-    }
-}
-
-private let trendAnnotationFormatter: DateFormatter = {
-  let formatter = DateFormatter()
-  formatter.dateFormat = "MMM d"
-  formatter.locale = Locale(identifier: "en_US_POSIX")
-  return formatter
-}()
-
 #Preview {
   UserDataView()
 }

@@ -81,3 +81,11 @@ let sessionDurationFormatter: DateComponentsFormatter = {
   formatter.unitsStyle = .abbreviated
   return formatter
   }()
+
+let trendAnnotationFormatter: DateFormatter = {
+  let formatter = DateFormatter()
+  formatter.dateFormat = "MMM d"
+  formatter.locale = Locale(identifier: "en_US_POSIX")
+  return formatter
+}()
+

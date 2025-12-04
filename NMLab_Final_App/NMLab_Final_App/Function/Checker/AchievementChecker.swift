@@ -202,10 +202,6 @@ private func calculateStreak(from sessions: [FocusSession]) -> Int {
   
   let sortedDays = uniqueDays.sorted(by: >)
   
-//  guard let mostRecentDayString = sortedDays.first,
-//        let mostRecentDay = formatter.date(from: mostRecentDayString) else {
-//    return 0
-//  }
   guard sortedDays.first != nil else {
     return 0
   }

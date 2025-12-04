@@ -8,13 +8,8 @@
 import SwiftUI
 
 struct TaskView: View {
-  @AppStorage("currentUsername") private var username = "Allen"
-  @State private var availableUsers: [String] = []
-  @State private var focusData: FocusData?
-  @State private var isLoading = false
-  @State private var isLoadingUsers = false
+  @StateObject private var dataManager = TaskDataManager()
   @State private var selectedTab: TaskTab = .tasks
-  @State private var statusMessage: String = "Pull to refresh."
   @State private var hasLoadedOnce = false
   
   enum TaskTab {
@@ -34,10 +29,10 @@ struct TaskView: View {
         .padding()
         
         // Content
-        if isLoading {
+        if dataManager.isLoading {
           ProgressView("Loading...")
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-        } else if let focusData {
+        } else if let focusData = dataManager.focusData {
           if selectedTab == .tasks {
             tasksView(focusData: focusData)
           } else {
@@ -51,7 +46,7 @@ struct TaskView: View {
             Text("No data available")
               .foregroundStyle(.secondary)
             Button("Refresh") {
-              fetchData()
+              dataManager.fetchData()
             }
             .buttonStyle(.borderedProminent)
           }
@@ -62,22 +57,22 @@ struct TaskView: View {
       .toolbar {
         ToolbarItem(placement: .topBarTrailing) {
           Menu {
-            if isLoadingUsers {
+            if dataManager.isLoadingUsers {
               ProgressView("Loading users...")
-            } else if availableUsers.isEmpty {
+            } else if dataManager.availableUsers.isEmpty {
               Button("No users available", action: {})
                 .disabled(true)
             } else {
-              ForEach(availableUsers, id: \.self) { user in
+              ForEach(dataManager.availableUsers, id: \.self) { user in
                 Button(user) {
-                  switchToUser(user)
+                  dataManager.switchToUser(user)
                 }
               }
             }
             Divider()
             Button {
               Task {
-                await fetchUserList(autoSelect: false)
+                await dataManager.fetchUserList(autoSelect: false)
               }
             } label: {
               Label("Refresh users", systemImage: "arrow.clockwise")
@@ -88,18 +83,18 @@ struct TaskView: View {
         }
       }
       .refreshable {
-        await refreshData()
+        await dataManager.refreshData()
       }
       .onAppear {
         if !hasLoadedOnce {
           hasLoadedOnce = true
           Task {
-            await initialLoad()
+            await dataManager.initialLoad()
           }
         }
       }
-      .onChange(of: username) { _, _ in
-        fetchData()
+      .onChange(of: dataManager.username) { _, _ in
+        dataManager.fetchData()
       }
     }
   }
@@ -265,80 +260,6 @@ struct TaskView: View {
         .fill(Color(.systemBackground))
         .shadow(color: .black.opacity(0.1), radius: 8, x: 0, y: 2)
     )
-  }
-  
-  private func colorForCategory(_ category: TaskCategory) -> Color {
-    switch category {
-    case .sessions: return .blue
-    case .time: return .green
-    case .score: return .yellow
-    case .level: return .purple
-    case .streak: return .orange
-    }
-  }
-  
-  private func colorForRarity(_ rarity: AchievementRarity) -> Color {
-    switch rarity {
-    case .common: return .gray
-    case .rare: return .blue
-    case .epic: return .purple
-    case .legendary: return .orange
-    }
-  }
-  
-  private func initialLoad() async {
-    await fetchUserList(autoSelect: true)
-    fetchData()
-  }
-  
-  @MainActor
-  private func fetchUserList(autoSelect: Bool) async {
-    guard !isLoadingUsers else { return }
-    isLoadingUsers = true
-    
-    await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
-      getFocusUsers { result in
-        defer {
-          isLoadingUsers = false
-          continuation.resume()
-        }
-        switch result {
-        case .success(let users):
-          availableUsers = users.sorted()
-          if autoSelect, !users.contains(username), let firstUser = users.first {
-            username = firstUser
-          }
-        case .failure(let error):
-          statusMessage = error.localizedDescription
-        }
-      }
-    }
-  }
-  
-  private func refreshData() async {
-    fetchData()
-  }
-  
-  private func fetchData() {
-    isLoading = true
-    statusMessage = "Loading..."
-    
-    getFocusData(user: username) { result in
-      isLoading = false
-      switch result {
-      case .success(let data):
-        focusData = data
-        statusMessage = "Updated"
-      case .failure(let error):
-        statusMessage = error.localizedDescription
-      }
-    }
-  }
-
-  private func switchToUser(_ newUser: String) {
-    guard username != newUser else { return }
-    username = newUser
-    fetchData()
   }
 }
 
