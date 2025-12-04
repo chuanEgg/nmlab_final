@@ -12,6 +12,7 @@ struct RankView: View {
   @State private var statusMessage: String = "Pull to refresh."
   @State private var isLoading = false
   @State private var lastUpdatedAt: Date? = nil
+  @State private var hasLoadedOnce = false
 
   var body: some View {
     NavigationStack {
@@ -53,15 +54,18 @@ struct RankView: View {
         await fetchRanks()
       }
       .navigationTitle("Focus Rank")
-//      .task(fetchRanks)
-      .onAppear{
-        Task {
-          await fetchRanks()
+      .onAppear {
+        if !hasLoadedOnce {
+          hasLoadedOnce = true
+          Task {
+            await fetchRanks()
+          }
         }
+      }
       }
       //這邊用onAppear是為了不會讓他一直加載，不然會很卡
     }
-  }
+  
 
   private func fetchRanks() async {
     guard !isLoading else { return }

@@ -8,12 +8,14 @@
 import SwiftUI
 
 struct UserDataView: View {
-  @State private var username = "Allen"
+  @AppStorage("currentUsername") private var username = "Allen"
   @State private var availableUsers: [String] = []
   @State private var focusData: FocusData?
   @State private var statusMessage: String = "Scroll to fetch data."
   @State private var isLoadingUsers = false
   @State private var lastUpdatedAt: Date? = nil
+  @State private var hasLoadedOnce = false
+
 
   var body: some View {
     NavigationStack {
@@ -95,8 +97,16 @@ struct UserDataView: View {
           }
         }
       }
-      .task {
-        await initialLoad()
+      .onAppear {
+        if !hasLoadedOnce {
+          hasLoadedOnce = true
+          Task {
+            await initialLoad()
+          }
+        }
+      }
+      .onChange(of: username) { _, _ in
+        fetchData()
       }
       .refreshable {
         fetchData()
@@ -117,7 +127,6 @@ struct UserDataView: View {
 
   private func focusDataRows(for data: FocusData) -> [(title: String, value: String)] {
     [
-//      ("Name", data.username),
       ("Level", "\(data.level)"),
       ("Play Time", formattedPlayTime(from: data)),
       ("Score", "\(data.score)")
