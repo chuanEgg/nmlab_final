@@ -17,34 +17,31 @@ struct RankView: View {
     NavigationStack {
       List {
         ForEach(Array(ranks.enumerated()), id: \.element.id) { index, entry in
-          HStack {
-            Text("\(index + 1).")
-              .font(.title2)
-              .fontWeight(.semibold)
-              .frame(width: 32, alignment: .leading)
-              .padding(.leading, 5)
-            VStack(alignment: .leading) {
-              Text(entry.username)
-                .font(.headline)
-              Text("Score: \(entry.score)")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-            }
-            Spacer()
-            if index == 0 {
-              Image(systemName: "crown.fill")
-                .foregroundColor(.yellow)
+          NavigationLink {
+            RankUserDetailView(username: entry.username)
+          } label: {
+            HStack {
+              Text("\(index + 1).")
+                .font(.title2)
+                .fontWeight(.semibold)
+                .frame(width: 32, alignment: .leading)
+                .padding(.leading, 5)
+              VStack(alignment: .leading) {
+                Text(entry.username)
+                  .font(.headline)
+                Text("Score: \(entry.score)")
+                  .font(.subheadline)
+                  .foregroundStyle(.secondary)
+              }
+              Spacer()
+              if index == 0 {
+                Image(systemName: "crown.fill")
+                  .foregroundColor(.yellow)
+              }
             }
           }
         }
 
-//        if !statusMessage.isEmpty {
-//          Text(statusMessage)
-//            .font(.footnote)
-//            .foregroundStyle(.secondary)
-//            .frame(maxWidth: .infinity, alignment: .center)
-//            .listRowSeparator(.hidden)
-//        }
         Section(statusMessage){}
       }
       .overlay {
@@ -62,7 +59,6 @@ struct RankView: View {
           await fetchRanks()
         }
       }
-
       //這邊用onAppear是為了不會讓他一直加載，不然會很卡
     }
   }

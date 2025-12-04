@@ -18,22 +18,47 @@ struct UserDataView: View {
   var body: some View {
     NavigationStack {
       List {
-        Section("Current User") {
-          Text(username)
-            .font(.headline)
+        Section {
+        } header: {
+          Text("Welcome Back, \(username)")
+            .font(.title2)
+            .fontWeight(.semibold)
+            .foregroundStyle(Color.primary)
         }
 
-        Section("Record") {
+        Section("Your Record") {
+          if let focusData {
+            VStack(spacing: 16) {
+              focusSummaryLabel(for: focusData)
+
+              FocusDetailChartView(focusData: focusData)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 3)
+//                .background(
+//                  RoundedRectangle(cornerRadius: 20, style: .continuous)
+//                    .fill(Color(.secondarySystemBackground))
+//                )
+            }
+
+          } else {
+            Text("No data")
+              .foregroundStyle(.secondary)
+          }
+        }
+        Section {
           if let focusData {
             NavigationLink {
-              FocusDetailView(focusData: focusData)
+              FocusDetailListView(focusData: focusData)
             } label: {
-              focusSummaryButton(for: focusData)
+              Text("Details")
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .fontWeight(.semibold)
+                .foregroundStyle(.primary)
+                .padding(.horizontal, 4)
             }
-            .buttonStyle(.plain)
+            .buttonBorderShape(.capsule)
+            .buttonStyle(.borderedProminent)
           } else {
-            Text("No data.")
-              .foregroundStyle(.secondary)
           }
         }
 
@@ -41,11 +66,11 @@ struct UserDataView: View {
         }
       }
       .navigationTitle("Focus Record")
+      .listSectionSpacing(10)
       .toolbar {
         ToolbarItem(placement: .topBarTrailing) {
           Menu {
             if isLoadingUsers {
-//              Label("Loading users...", systemImage: "hourglass")
               ProgressView("Loading users...")
             } else if availableUsers.isEmpty {
               Button("No users available", action: {})
@@ -154,18 +179,18 @@ struct UserDataView: View {
   }
 
   @ViewBuilder
-  private func focusSummaryButton(for data: FocusData) -> some View {
+  private func focusSummaryLabel(for data: FocusData) -> some View {
     HStack {
       Image(systemName: "graduationcap.circle")
         .resizable()
         .scaledToFit()
         .frame(maxHeight: 50)
 
-      VStack(alignment: .leading) {
+      VStack(alignment: .leading, spacing: 5) {
         HStack(spacing: 10) {
           Text("Lv."+"\(data.level)")
             .foregroundStyle(.secondary)
-            .font(.headline.weight(.semibold))
+            .font(.title3.weight(.semibold))
           Spacer()
           if let firstText = firstSessionDateText(from: data) {
             Text(firstText)

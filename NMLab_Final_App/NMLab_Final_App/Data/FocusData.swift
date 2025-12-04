@@ -81,20 +81,36 @@ struct FocusSession: Codable, Identifiable {
 
   init(from decoder: Decoder) throws {
     let container = try decoder.container(keyedBy: CodingKeys.self)
-    startTime = try FocusSession.decodeTimeInterval(for: .startTime, in: container)
-    endTime = try FocusSession.decodeTimeInterval(for: .endTime, in: container)
+    startTime = try FocusSession.decodeTimeInterval(for: .startTime, in: container, allowNilAsNow: false)
+    endTime = try FocusSession.decodeTimeInterval(for: .endTime, in: container, allowNilAsNow: true)
   }
 
-  private static func decodeTimeInterval(for key: CodingKeys, in container: KeyedDecodingContainer<CodingKeys>) throws -> TimeInterval {
-    let rawValue = try container.decode(String.self, forKey: key)
-    guard let date = FocusSession.sessionDateFormatter.date(from: rawValue) else {
-      throw DecodingError.dataCorruptedError(
-        forKey: key,
-        in: container,
-        debugDescription: "Invalid date format: \(rawValue)"
-      )
+  /// Decodes a date as a `TimeInterval` from either a formatted string or (optionally) `null`.
+  /// - Parameters:
+  ///   - key: Coding key to decode.
+  ///   - container: Container to decode from.
+  ///   - allowNilAsNow: If `true` and the value is `null`, returns the current time instead of failing.
+  private static func decodeTimeInterval(
+    for key: CodingKeys,
+    in container: KeyedDecodingContainer<CodingKeys>,
+    allowNilAsNow: Bool
+  ) throws -> TimeInterval {
+    // Handle explicit null (e.g. ongoing session with no end_time yet)
+    if allowNilAsNow, (try? container.decodeNil(forKey: key)) == true {
+      return Date().timeIntervalSince1970
     }
-    return date.timeIntervalSince1970
+
+    // Primary path: string date like "2025-11-24T15:00:00"
+    if let rawValue = try? container.decode(String.self, forKey: key),
+       let date = FocusSession.sessionDateFormatter.date(from: rawValue) {
+      return date.timeIntervalSince1970
+    }
+
+    throw DecodingError.dataCorruptedError(
+      forKey: key,
+      in: container,
+      debugDescription: "Invalid or missing date value for key \(key)"
+    )
   }
 
   var duration: TimeInterval {

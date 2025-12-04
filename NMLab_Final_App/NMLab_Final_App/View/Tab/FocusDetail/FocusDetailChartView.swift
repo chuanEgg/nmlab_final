@@ -103,18 +103,11 @@ struct FocusDetailChartView: View {
             .font(.footnote.weight(.semibold))
           Spacer()
           Text("\(totalText) in total")
-            .font(.callout)
+            .font(.footnote)
             .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, alignment: .center)
-        .background(
-          Capsule()
-            .fill(Color(.systemBackground))
-        )
-        .overlay(
-          Capsule()
-            .stroke(Color(.separator).opacity(0.3), lineWidth: 0.5)
-        )
+        .backgroundStyle(Material.thin)
       }
     }
   }
@@ -222,16 +215,6 @@ private func infoBadge(dateText: String, valueTitle: String, valueText: String) 
         .font(.callout.weight(.semibold))
         .foregroundStyle(.secondary)
     }
-//  .padding(.vertical, 10)
-//  .padding(.horizontal, 14)
-  .background(
-    Capsule(style: .continuous)
-      .fill(Color(.systemBackground))
-  )
-  .overlay(
-    Capsule(style: .continuous)
-      .stroke(Color(.separator).opacity(0.3), lineWidth: 0.5)
-  )
 }
 
 private let trendAnnotationFormatter: DateFormatter = {
