@@ -70,10 +70,11 @@ class FaceTracker:
             # self.tilt_angle = self.move_gpiozero(self.tilt_angle, target_tilt, self.tilt_servo)
 
     def cleanup(self):
-        self.pan_pwm.stop()
-        self.tilt_pwm.stop()
         GPIO.cleanup()
         Picamera2().stop()
+        self.pan_pwm.stop()
+        self.tilt_pwm.stop()
+        
 
     def track(self, image):
         detection_result = self.detector.detect(image)
