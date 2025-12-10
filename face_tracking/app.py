@@ -6,6 +6,7 @@ from datetime import datetime, timezone, timedelta
 import math
 import threading
 from tracker import tracker_task
+
 def calculate_level(score):
     return math.floor((-1 + math.sqrt(1 + 0.16 * score)) / 2)
 app = Flask(__name__)

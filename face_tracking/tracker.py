@@ -73,6 +73,7 @@ class FaceTracker:
         self.pan_pwm.stop()
         self.tilt_pwm.stop()
         GPIO.cleanup()
+        Picamera2().stop()
 
     def track(self, image):
         detection_result = self.detector.detect(image)
