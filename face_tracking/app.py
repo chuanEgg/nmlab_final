@@ -5,7 +5,7 @@ import os
 from datetime import datetime, timezone, timedelta
 import math
 import threading
-
+from tracker import tracker_task
 def calculate_level(score):
     return math.floor((-1 + math.sqrt(1 + 0.16 * score)) / 2)
 app = Flask(__name__)
@@ -227,27 +227,29 @@ def long_task():
     print("Task stopped.")
 
 @app.route("/button/toggle", methods=["POST"])
-def toggle__button_status():
+def toggle_button():
     global task_thread, stop_event
+
     current = read_status()
     new_status = 0 if current == 1 else 1
     write_status(new_status)
+
     if new_status == 1:
         if task_thread is None or not task_thread.is_alive():
-            stop_event.clear()  # 確保 event 是未設定狀態
-            task_thread = threading.Thread(target=long_task)
+            stop_event.clear()
+            task_thread = threading.Thread(
+                target=tracker_task,
+                args=(stop_event,),
+                daemon=True
+            )
             task_thread.start()
             start_session_internal("Allen")
-        return jsonify({"message": "Task started"}), 202
-
-    else:  # new_status == 0
-        stop_event.set()  # 讓 thread 停止
+        return jsonify({"msg": "Tracker started"}), 202
+    else:
+        stop_event.set()
         stop_session_internal("Allen")
         append_score_internal("Allen", 10)
-        return jsonify({"message": "Task stopped"}), 200
-    
-    return jsonify({"success": True, "button_status": new_status})
-
+        return jsonify({"msg": "Tracker stopped"}), 200
 
 
 

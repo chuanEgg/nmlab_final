@@ -137,3 +137,29 @@ if __name__ == '__main__':
     finally:
         if tracker:
             tracker.cleanup()
+def tracker_task(stop_event):
+    """Thread loop, controlled by stop_event"""
+    tracker = FaceTracker()
+    time.sleep(2)
+
+    picamera2 = Picamera2()
+    config = picamera2.create_preview_configuration(
+        main={"format": "RGB888", "size": (640, 480)}
+    )
+    picamera2.configure(config)
+    picamera2.start()
+
+    frame_count = 0
+    try:
+        while not stop_event.is_set():
+            frame = picamera2.capture_array()
+
+            frame_count += 1
+            if frame_count % 3 != 0:
+                continue
+
+            frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            tracker.track(frame_rgb)
+
+    finally:
+        tracker.cleanup()
