@@ -71,7 +71,6 @@ class FaceTracker:
 
     def cleanup(self):
         GPIO.cleanup()
-        Picamera2().stop()
         self.pan_pwm.stop()
         self.tilt_pwm.stop()
         
@@ -173,4 +172,5 @@ def tracker_task(stop_event):
             tracker.track(frame_rgb)
 
     finally:
+        Picamera2.stop()
         tracker.cleanup()
