@@ -14,7 +14,7 @@ class FaceTracker:
     def __init__(self):
         self.pan_pwm, self.tilt_pwm = setup_servo()
         self.pan_angle = 90  # Initial angle
-        self.tilt_angle = 60  # Initial angle
+        self.tilt_angle = 50  # Initial angle
         self.move_to(self.pan_angle, self.tilt_angle)
         self.pan_pwm.ChangeDutyCycle(angle_to_duty_cycle(self.pan_angle))
         self.tilt_pwm.ChangeDutyCycle(angle_to_duty_cycle(self.tilt_angle))
@@ -151,7 +151,7 @@ def init_camera(retries=5):
     for i in range(retries):
         try:
             picamera2 = Picamera2()
-            config = picamera2.create_preview_configuration(main={"format": "RGB888", "size": (640, 480)})
+            config = picamera2.create_preview_configuration(main={"format": "RGB888", "size": (800, 600)})
             picamera2.configure(config)
             picamera2.start()
             return picamera2
@@ -159,6 +159,7 @@ def init_camera(retries=5):
             print(f"Camera busy, retry {i+1}/{retries}")
             time.sleep(1)
     raise RuntimeError("Failed to initialize camera after retries")
+
 def tracker_task(stop_event, picamera2):
     """Thread loop, controlled by stop_event"""
     tracker = FaceTracker()
@@ -171,16 +172,19 @@ def tracker_task(stop_event, picamera2):
     try:
         while not stop_event.is_set():
             frame = picamera2.capture_array()
-            if frame_count % 40 == 0:
-                print("Tracker running...")
+
+            
             frame_count += 1
-            if frame_count % 3 != 0:
+            if frame_count % 4 != 0:
                 continue
+            cv2.imwrite("latest.jpg", cv2.flip(frame,0))
+            print("Tracker running...")
             
             
 
             frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             tracker.track(frame_rgb)
+            
 
     except Exception as e:
         print("Exception in tracker_task:", e)
