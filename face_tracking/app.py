@@ -254,6 +254,7 @@ def toggle_button():
         stop_event.set()
         if task_thread is not None:
             task_thread.join()   # 等 thread 結束
+        tracker_task
         #stop_session_internal("Allen")
         #append_score_internal("Allen", 10)
         return jsonify({"msg": "Tracker stopped"}), 200

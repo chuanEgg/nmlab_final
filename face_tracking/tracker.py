@@ -181,4 +181,4 @@ def tracker_task(stop_event):
 
     finally:
        
-        tracker.cleanup()
+        #tracker.cleanup()
