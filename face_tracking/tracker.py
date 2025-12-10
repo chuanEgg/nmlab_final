@@ -181,4 +181,7 @@ def tracker_task(stop_event):
 
     except Exception as e:
         print("Exception in tracker_task:", e)
+    finally:
+        tracker.cleanup()
+        picamera2.stop()
     
