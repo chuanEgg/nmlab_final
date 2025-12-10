@@ -179,3 +179,6 @@ def tracker_task(stop_event):
             frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             tracker.track(frame_rgb)
 
+    except Exception as e:
+        print("Exception in tracker_task:", e)
+    
