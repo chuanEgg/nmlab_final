@@ -172,5 +172,5 @@ def tracker_task(stop_event):
             tracker.track(frame_rgb)
 
     finally:
-        Picamera2.stop()
+       
         tracker.cleanup()
