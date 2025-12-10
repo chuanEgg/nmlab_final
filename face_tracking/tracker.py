@@ -171,12 +171,13 @@ def tracker_task(stop_event, picamera2):
     try:
         while not stop_event.is_set():
             frame = picamera2.capture_array()
-
-            frame_count += 1
+            if frame_count % 40 == 0:
+                print("Tracker running...")
+            
             if frame_count % 3 != 0:
                 continue
-            if frame_count % 140 == 0:
-                print("Tracker running...")
+            frame_count += 1
+            
 
             frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             tracker.track(frame_rgb)
