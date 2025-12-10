@@ -16,18 +16,23 @@ struct FocusDetailListView: View {
             detailRow(title: "User", value: focusData.username)
             detailRow(title: "Level", value: "\(focusData.level)")
             detailRow(title: "Play Time", value: formattedPlayTime(from: focusData))
-            detailRow(title: "Score", value: "\(focusData.score)")
+            detailRow(title: "Total Score", value: "\(focusData.score)")
           }
           Section("Sessions") {
             if focusData.sessions.isEmpty {
               Text("No recorded sessions.")
                 .foregroundStyle(.secondary)
             } else {
-              ForEach(focusData.sessions) { session in
-                HStack(spacing: 4) {
-                  Text(sessionRangeText(for: session))
-                    .font(.headline)
-                    .fontWeight(.semibold)
+              ForEach(Array(focusData.sessions.enumerated()), id: \.element.id) { index, session in
+                HStack(spacing: 6) {
+                  VStack(alignment: .leading, spacing: 4) {
+                    Text(sessionRangeText(for: session))
+                      .font(.headline)
+                      .fontWeight(.semibold)
+                    Text("Score: \(sessionScoreText(at: index))")
+                      .font(.subheadline)
+                      .foregroundStyle(.secondary)
+                  }
                   Spacer()
                   Text(sessionDurationText(for: session))
                     .foregroundStyle(.secondary)
@@ -55,12 +60,27 @@ struct FocusDetailListView: View {
 
   private func sessionRangeText(for session: FocusSession) -> String {
     let start = sessionDisplayFormatter.string(from: session.startDate)
+    if session.isOngoing {
+      return "\(start) - Now"
+    }
     let end = sessionDisplayFormatter.string(from: session.endDate)
     return "\(start) - \(end)"
   }
 
   private func sessionDurationText(for session: FocusSession) -> String {
-    sessionDurationFormatter.string(from: session.duration) ?? ""
+    if session.isOngoing {
+      let elapsed = Date().timeIntervalSince1970 - session.startTime
+      let formatted = sessionDurationFormatter.string(from: elapsed) ?? ""
+      return formatted.isEmpty ? "Ongoing" : "Ongoing · \(formatted)"
+    }
+    return sessionDurationFormatter.string(from: session.duration) ?? ""
+  }
+  
+  private func sessionScoreText(at index: Int) -> String {
+    if index < focusData.sessionScores.count {
+      return "\(focusData.sessionScores[index])"
+    }
+    return "N/A"
   }
 }
 

@@ -65,6 +65,7 @@ func getFocusData(user: String, completion: @escaping (Result<FocusData, Error>)
     }
 
     let decoder = JSONDecoder()
+    decoder.dateDecodingStrategy = .iso8601
     Task { @MainActor in
       do {
         if let focusData = try? decoder.decode(FocusData.self, from: data) {

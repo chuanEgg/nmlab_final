@@ -14,6 +14,8 @@ struct FocusData: Codable, Identifiable {
   /// Raw play-time slices (in seconds) as delivered by the backend.
   let playTimes: [Int]
   let score: Int
+  /// Per-session score values aligned with `sessions` by index.
+  let sessionScores: [Int]
   let sessions: [FocusSession]
 
   enum CodingKeys: String, CodingKey {
@@ -22,15 +24,25 @@ struct FocusData: Codable, Identifiable {
     case level
     case playTimes = "play_time"
     case score
+    case sessionScores = "scores"
     case sessions
   }
 
-  init(id: String, username: String, level: Int, playTimes: [Int], score: Int, sessions: [FocusSession]) {
+  init(
+    id: String,
+    username: String,
+    level: Int,
+    playTimes: [Int],
+    score: Int,
+    sessionScores: [Int],
+    sessions: [FocusSession]
+  ) {
     self.id = id
     self.username = username
     self.level = level
     self.playTimes = playTimes
     self.score = score
+    self.sessionScores = sessionScores
     self.sessions = sessions
   }
 
@@ -41,6 +53,7 @@ struct FocusData: Codable, Identifiable {
     level = try container.decodeIfPresent(Int.self, forKey: .level) ?? 0
     playTimes = try container.decodeIfPresent([Int].self, forKey: .playTimes) ?? []
     score = try container.decodeIfPresent(Int.self, forKey: .score) ?? 0
+    sessionScores = try container.decodeIfPresent([Int].self, forKey: .sessionScores) ?? []
     sessions = try container.decodeIfPresent([FocusSession].self, forKey: .sessions) ?? []
   }
 
@@ -60,6 +73,7 @@ struct FocusSession: Codable, Identifiable {
   let id = UUID()
   let startTime: TimeInterval
   let endTime: TimeInterval
+  let isOngoing: Bool
 
   enum CodingKeys: String, CodingKey {
     case startTime = "start_time"
@@ -70,19 +84,29 @@ struct FocusSession: Codable, Identifiable {
     let formatter = DateFormatter()
     formatter.locale = Locale(identifier: "en_US_POSIX")
     formatter.dateFormat = "yyyy-MM-dd'T'HH:mm:ss"
-    formatter.timeZone = TimeZone(secondsFromGMT: 0)
+    // Backend timestamps are in UTC+8 without explicit offset.
+    formatter.timeZone = TimeZone(secondsFromGMT: 8 * 3600)
     return formatter
   }()
 
   init(startTime: TimeInterval, endTime: TimeInterval) {
     self.startTime = startTime
     self.endTime = endTime
+    self.isOngoing = false
   }
 
   init(from decoder: Decoder) throws {
     let container = try decoder.container(keyedBy: CodingKeys.self)
     startTime = try FocusSession.decodeTimeInterval(for: .startTime, in: container, allowNilAsNow: false)
-    endTime = try FocusSession.decodeTimeInterval(for: .endTime, in: container, allowNilAsNow: true)
+
+    // If end_time is null, mark as ongoing and use current time for a rolling duration.
+    let endIsNil = (try? container.decodeNil(forKey: .endTime)) == true
+    isOngoing = endIsNil
+    if endIsNil {
+      endTime = Date().timeIntervalSince1970
+    } else {
+      endTime = try FocusSession.decodeTimeInterval(for: .endTime, in: container, allowNilAsNow: false)
+    }
   }
 
   /// Decodes a date as a `TimeInterval` from either a formatted string or (optionally) `null`.
@@ -114,7 +138,10 @@ struct FocusSession: Codable, Identifiable {
   }
 
   var duration: TimeInterval {
-    endTime - startTime
+    if isOngoing {
+      return Date().timeIntervalSince1970 - startTime
+    }
+    return endTime - startTime
   }
 
   var startDate: Date {

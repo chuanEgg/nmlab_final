@@ -72,6 +72,7 @@ let sessionDisplayFormatter: DateFormatter = {
   let formatter = DateFormatter()
   formatter.dateFormat = "MM/dd HH:mm"
   formatter.locale = Locale(identifier: "en_US_POSIX")
+  formatter.timeZone = TimeZone(secondsFromGMT: 8 * 3600)
   return formatter
 }()
 

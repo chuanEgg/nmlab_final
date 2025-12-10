@@ -26,7 +26,7 @@ struct FocusDetailChartView: View {
             y: .value("Minutes", point.durationMinutes)
           )
           .foregroundStyle(.accent)
-          .interpolationMethod(.catmullRom)
+          .interpolationMethod(.linear)
 
           // Outer ring
           PointMark(
@@ -115,7 +115,10 @@ struct FocusDetailChartView: View {
   private var trendDataPoints: [FocusTrendPoint] {
     let calendar = Calendar.current
     let today = calendar.startOfDay(for: Date())
-    let samples = focusData.recentPlayTimes(limit: 7)
+    // Prefer backend-provided playTimes; if missing, derive from sessions.
+    let rawSamples = focusData.recentPlayTimes(limit: 7)
+    let fallbackSamples: [Int] = focusData.sessions.map { Int($0.duration) }
+    let samples = rawSamples.isEmpty ? Array(fallbackSamples.suffix(7)) : rawSamples
     return samples.enumerated().compactMap { index, seconds in
       let offset = -(samples.count - index - 1)
       guard let date = calendar.date(byAdding: .day, value: offset, to: today)
