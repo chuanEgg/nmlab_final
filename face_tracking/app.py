@@ -235,22 +235,24 @@ def toggle_button():
     write_status(new_status)
 
     if new_status == 1:
-        if task_thread is None or not task_thread.is_alive():
-            stop_event.clear()
-            task_thread = threading.Thread(
-                target=tracker_task,
-                args=(stop_event,),
-                daemon=True
-            )
-            task_thread.start()
-            start_session_internal("Allen")
+        # 等上一次 thread 完全結束
+        if task_thread is not None and task_thread.is_alive():
+            stop_event.set()
+            task_thread.join()
+
+        stop_event.clear()
+        task_thread = threading.Thread(target=tracker_task, args=(stop_event,))
+        task_thread.start()
+        start_session_internal("Allen")
         return jsonify({"msg": "Tracker started"}), 202
+
     else:
         stop_event.set()
+        if task_thread is not None:
+            task_thread.join()   # 等 thread 結束
         stop_session_internal("Allen")
         append_score_internal("Allen", 10)
         return jsonify({"msg": "Tracker stopped"}), 200
-
 
 
 tz_utc8 = timezone(timedelta(hours=8))
