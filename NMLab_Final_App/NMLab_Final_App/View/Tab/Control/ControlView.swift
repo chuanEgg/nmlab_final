@@ -40,7 +40,7 @@ struct ControlView: View {
         Spacer()
       }
       .padding()
-      .navigationTitle("Button Control")
+      .navigationTitle("Camera Control")
       .task {
         await loadStatus()
         await loadPhoto()
@@ -103,6 +103,7 @@ struct ControlView: View {
         .foregroundStyle(.primary)
       Spacer()
     }
+//    .shadow(radius: 5)
     .padding(.horizontal, 4)
   }
 
@@ -119,6 +120,7 @@ struct ControlView: View {
         .frame(maxWidth: .infinity)
     }
     .buttonStyle(.borderedProminent)
+//    .shadow(radius: 5)
     .disabled(isLoading)
   }
 
@@ -166,7 +168,7 @@ struct ControlView: View {
 
 extension ControlView {
   func statusText(for value: Int) -> String {
-    value == 1 ? "Button Status: ON" : "Button Status: OFF"
+    value == 1 ? "Camera Status: ON" : "Camera Status: OFF"
   }
 
   @MainActor

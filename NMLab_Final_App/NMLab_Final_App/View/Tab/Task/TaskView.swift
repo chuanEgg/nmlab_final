@@ -19,82 +19,84 @@ struct TaskView: View {
   
   var body: some View {
     NavigationStack {
-      VStack(spacing: 0) {
-        // Tab selector
-        Picker("View", selection: $selectedTab) {
-          Text("Tasks").tag(TaskTab.tasks)
-          Text("Achievements").tag(TaskTab.achievements)
-        }
-        .pickerStyle(.segmented)
-        .padding()
-        
-        // Content
-        if dataManager.isLoading {
-          ProgressView("Loading...")
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-        } else if let focusData = dataManager.focusData {
-          if selectedTab == .tasks {
-            tasksView(focusData: focusData)
-          } else {
-            achievementsView(focusData: focusData)
+      ScrollView {
+        VStack(spacing: 0) {
+          // Tab selector
+          Picker("View", selection: $selectedTab) {
+            Text("Tasks").tag(TaskTab.tasks)
+            Text("Achievements").tag(TaskTab.achievements)
           }
-        } else {
-          VStack(spacing: 16) {
-            Image(systemName: "tray")
-              .font(.system(size: 48))
-              .foregroundStyle(.secondary)
-            Text("No data available")
-              .foregroundStyle(.secondary)
-            Button("Refresh") {
-              dataManager.fetchData()
-            }
-            .buttonStyle(.borderedProminent)
-          }
-          .frame(maxWidth: .infinity, maxHeight: .infinity)
-        }
-      }
-      .navigationTitle("Tasks & Achievements")
-      .toolbar {
-        ToolbarItem(placement: .topBarTrailing) {
-          Menu {
-            if dataManager.isLoadingUsers {
-              ProgressView("Loading users...")
-            } else if dataManager.availableUsers.isEmpty {
-              Button("No users available", action: {})
-                .disabled(true)
+          .pickerStyle(.segmented)
+          .padding()
+
+          // Content
+          if dataManager.isLoading {
+            ProgressView("Loading...")
+              .frame(maxWidth: .infinity, maxHeight: .infinity)
+          } else if let focusData = dataManager.focusData {
+            if selectedTab == .tasks {
+              tasksView(focusData: focusData)
             } else {
-              ForEach(dataManager.availableUsers, id: \.self) { user in
-                Button(user) {
-                  dataManager.switchToUser(user)
+              achievementsView(focusData: focusData)
+            }
+          } else {
+            VStack(spacing: 16) {
+              Image(systemName: "tray")
+                .font(.system(size: 48))
+                .foregroundStyle(.secondary)
+              Text("No data available")
+                .foregroundStyle(.secondary)
+              Button("Refresh") {
+                dataManager.fetchData()
+              }
+              .buttonStyle(.borderedProminent)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+          }
+        }
+        .navigationTitle("Tasks & Achievements")
+        .toolbar {
+          ToolbarItem(placement: .topBarTrailing) {
+            Menu {
+              if dataManager.isLoadingUsers {
+                ProgressView("Loading users...")
+              } else if dataManager.availableUsers.isEmpty {
+                Button("No users available", action: {})
+                  .disabled(true)
+              } else {
+                ForEach(dataManager.availableUsers, id: \.self) { user in
+                  Button(user) {
+                    dataManager.switchToUser(user)
+                  }
                 }
               }
-            }
-            Divider()
-            Button {
-              Task {
-                await dataManager.fetchUserList(autoSelect: false)
+              Divider()
+              Button {
+                Task {
+                  await dataManager.fetchUserList(autoSelect: false)
+                }
+              } label: {
+                Label("Refresh users", systemImage: "arrow.clockwise")
               }
             } label: {
-              Label("Refresh users", systemImage: "arrow.clockwise")
+              Image(systemName: "person.fill")
             }
-          } label: {
-            Image(systemName: "person.fill")
           }
         }
-      }
-      .refreshable {
-        await dataManager.refreshData()
-      }
-      .onAppear {
-        if !hasLoadedOnce {
-          hasLoadedOnce = true
-          Task {
-            await dataManager.initialLoad()
+        .refreshable {
+          await dataManager.refreshData()
+        }
+        .onAppear {
+          if !hasLoadedOnce {
+            hasLoadedOnce = true
+            Task {
+              await dataManager.initialLoad()
+            }
           }
         }
-      }
-      .onChange(of: dataManager.username) { _, _ in
-        dataManager.fetchData()
+        .onChange(of: dataManager.username) { _, _ in
+          dataManager.fetchData()
+        }
       }
     }
   }
@@ -104,7 +106,7 @@ struct TaskView: View {
     let tasks = generateTasks(from: focusData)
     let tasksByCategory = Dictionary(grouping: tasks) { $0.category }
     
-    ScrollView {
+//    ScrollView {
       LazyVStack(spacing: 16) {
         // Summary card
         summaryCard(tasks: tasks)
@@ -134,7 +136,7 @@ struct TaskView: View {
         }
       }
       .padding(.bottom)
-    }
+//    }
   }
   
   @ViewBuilder

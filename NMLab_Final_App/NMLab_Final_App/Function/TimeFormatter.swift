@@ -78,7 +78,7 @@ let sessionDisplayFormatter: DateFormatter = {
 
 let sessionDurationFormatter: DateComponentsFormatter = {
   let formatter = DateComponentsFormatter()
-  formatter.allowedUnits = [.hour, .minute]
+  formatter.allowedUnits = [.hour, .minute, .second]
   formatter.unitsStyle = .abbreviated
   return formatter
   }()
