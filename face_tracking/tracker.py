@@ -175,7 +175,7 @@ def tracker_task(stop_event, picamera2):
             frame_count += 1
             if frame_count % 3 != 0:
                 continue
-            if frame_count % 300 == 0:
+            if frame_count % 140 == 0:
                 print("Tracker running...")
 
             frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
