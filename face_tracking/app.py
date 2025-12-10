@@ -219,7 +219,9 @@ def write_status(value):
 @app.route("/button/status", methods=["GET"])
 def get_button_status():
     s = read_status()
-    return jsonify({"button_status": s})
+    global task_thread, stop_event
+    
+    return jsonify({"button_status": s, "task_thread": str(task_thread)})
 
 def long_task():
     while not stop_event.is_set():
