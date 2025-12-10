@@ -41,8 +41,8 @@ class UserDataManager: ObservableObject {
     updateStatusMessage()
     
     // Then update every 30 seconds
-    updateTimer = Timer.scheduledTimer(withTimeInterval: 30.0, repeats: true) { [weak self] _ in
-      Task { @MainActor in
+    updateTimer = Timer.scheduledTimer(withTimeInterval: 30.0, repeats: true) { _ in
+      Task { @MainActor [weak self] in
         self?.updateStatusMessage()
       }
     }
@@ -75,14 +75,11 @@ class UserDataManager: ObservableObject {
     isLoadingUsers = true
     
     await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
-      getFocusUsers { result in
-        defer {
-          Task { @MainActor in
-            self.isLoadingUsers = false
-            continuation.resume()
-          }
-        }
+      getFocusUsers { [weak self] result in
         Task { @MainActor in
+          defer { continuation.resume() }
+          guard let self else { return }
+          self.isLoadingUsers = false
           switch result {
           case .success(let users):
             self.availableUsers = users.sorted()
@@ -103,8 +100,9 @@ class UserDataManager: ObservableObject {
     focusData = nil
     stopUpdateTimer()
     
-    getFocusData(user: username) { result in
+    getFocusData(user: username) { [weak self] result in
       Task { @MainActor in
+        guard let self else { return }
         switch result {
         case .success(let data):
           self.focusData = data
@@ -156,14 +154,11 @@ class TaskDataManager: ObservableObject {
     isLoadingUsers = true
     
     await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
-      getFocusUsers { result in
-        defer {
-          Task { @MainActor in
-            self.isLoadingUsers = false
-            continuation.resume()
-          }
-        }
+      getFocusUsers { [weak self] result in
         Task { @MainActor in
+          defer { continuation.resume() }
+          guard let self else { return }
+          self.isLoadingUsers = false
           switch result {
           case .success(let users):
             self.availableUsers = users.sorted()
@@ -183,8 +178,9 @@ class TaskDataManager: ObservableObject {
     isLoading = true
     statusMessage = "Loading..."
     
-    getFocusData(user: username) { result in
+    getFocusData(user: username) { [weak self] result in
       Task { @MainActor in
+        guard let self else { return }
         self.isLoading = false
         switch result {
         case .success(let data):

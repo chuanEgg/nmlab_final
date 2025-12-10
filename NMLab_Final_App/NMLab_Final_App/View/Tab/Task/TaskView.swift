@@ -151,35 +151,37 @@ struct TaskView: View {
           .padding(.top, 8)
         
         // Achievements by rarity
-        ForEach(AchievementRarity.allCases.reversed(), id: \.self) { rarity in
-          let rarityAchievements = achievements.filter { $0.rarity == rarity }
-          if !rarityAchievements.isEmpty {
-            Section {
-              LazyVGrid(columns: [
-                GridItem(.flexible()),
-                GridItem(.flexible())
-              ], spacing: 12) {
-                ForEach(rarityAchievements) { achievement in
-                  AchievementCardView(achievement: achievement)
+        Group {
+          ForEach(AchievementRarity.allCases.reversed(), id: \.self) { rarity in
+            let rarityAchievements = achievements.filter { $0.rarity == rarity }
+            if !rarityAchievements.isEmpty {
+              Section {
+                LazyVGrid(columns: [
+                  GridItem(.flexible()),
+                  GridItem(.flexible())
+                ], spacing: 12) {
+                  ForEach(rarityAchievements) { achievement in
+                    AchievementCardView(achievement: achievement)
+                  }
                 }
+              } header: {
+                HStack {
+                  Text(rarity.rawValue)
+                    .font(.headline)
+                    .foregroundStyle(colorForRarity(rarity))
+                  Spacer()
+                  Text("\(rarityAchievements.filter { $0.isUnlocked }.count)/\(rarityAchievements.count)")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                }
+                .padding(.horizontal)
+                .padding(.top, 8)
               }
-            } header: {
-              HStack {
-                Text(rarity.rawValue)
-                  .font(.headline)
-                  .foregroundStyle(colorForRarity(rarity))
-                Spacer()
-                Text("\(rarityAchievements.filter { $0.isUnlocked }.count)/\(rarityAchievements.count)")
-                  .font(.subheadline)
-                  .foregroundStyle(.secondary)
-              }
-              .padding(.horizontal)
-              .padding(.top, 8)
             }
           }
         }
+        .padding(.horizontal)
       }
-      .padding(.horizontal)
       .padding(.bottom)
     }
   }

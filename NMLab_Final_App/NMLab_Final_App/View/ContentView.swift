@@ -21,6 +21,10 @@ struct ContentView: View {
       Tab("Rank", systemImage: "chart.bar.xaxis") {
         RankView()
       }
+
+      Tab("Control", systemImage: "switch.2") {
+        ControlView()
+      }
     }
   }
 

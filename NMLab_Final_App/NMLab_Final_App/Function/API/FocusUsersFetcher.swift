@@ -58,14 +58,17 @@ func getFocusUsers(completion: @escaping (Result<[String], Error>) -> Void) {
       return
     }
 
-    do {
-      let response = try JSONDecoder().decode(FocusUsersResponse.self, from: data)
-      Task { @MainActor in completion(.success(response.usernames)) }
-    } catch {
-      if let bodyString = String(data: data, encoding: .utf8) {
-        print("Raw users payload: \(bodyString)")
+    let decoder = JSONDecoder()
+    Task { @MainActor in
+      do {
+        let response = try decoder.decode(FocusUsersResponse.self, from: data)
+        completion(.success(response.usernames))
+      } catch {
+        if let bodyString = String(data: data, encoding: .utf8) {
+          print("Raw users payload: \(bodyString)")
+        }
+        completion(.failure(FocusUsersError.decodingFailed(underlying: error)))
       }
-      Task { @MainActor in completion(.failure(FocusUsersError.decodingFailed(underlying: error))) }
     }
   }.resume()
 }

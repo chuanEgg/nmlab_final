@@ -64,25 +64,26 @@ func getFocusData(user: String, completion: @escaping (Result<FocusData, Error>)
       return
     }
 
-    do {
-      let decoder = JSONDecoder()
+    let decoder = JSONDecoder()
+    Task { @MainActor in
+      do {
+        if let focusData = try? decoder.decode(FocusData.self, from: data) {
+          completion(.success(focusData))
+          return
+        }
 
-      if let focusData = try? decoder.decode(FocusData.self, from: data) {
-        Task { @MainActor in completion(.success(focusData)) }
-        return
+        let focusList = try decoder.decode([FocusData].self, from: data)
+        if let matched = focusList.first(where: { $0.username.caseInsensitiveCompare(user) == .orderedSame }) {
+          completion(.success(matched))
+        } else {
+          completion(.failure(FocusDataError.userNotFound(username: user)))
+        }
+      } catch {
+        if let bodyString = String(data: data, encoding: .utf8) {
+          print("Raw payload: \(bodyString)")
+        }
+        completion(.failure(FocusDataError.decodingFailed(underlying: error)))
       }
-
-      let focusList = try decoder.decode([FocusData].self, from: data)
-      if let matched = focusList.first(where: { $0.username.caseInsensitiveCompare(user) == .orderedSame }) {
-        Task { @MainActor in completion(.success(matched)) }
-      } else {
-        Task { @MainActor in completion(.failure(FocusDataError.userNotFound(username: user))) }
-      }
-    } catch {
-      if let bodyString = String(data: data, encoding: .utf8) {
-        print("Raw payload: \(bodyString)")
-      }
-      Task { @MainActor in completion(.failure(FocusDataError.decodingFailed(underlying: error))) }
     }
   }.resume()
 }
