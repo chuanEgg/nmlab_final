@@ -70,9 +70,17 @@ class FaceTracker:
             # self.tilt_angle = self.move_gpiozero(self.tilt_angle, target_tilt, self.tilt_servo)
 
     def cleanup(self):
+        if hasattr(self, "pan_pwm") and self.pan_pwm is not None:
+            try:
+                self.pan_pwm.stop()
+            except Exception as e:
+                print("Failed to stop pan_pwm:", e)
+        if hasattr(self, "tilt_pwm") and self.tilt_pwm is not None:
+            try:
+                self.tilt_pwm.stop()
+            except Exception as e:
+                print("Failed to stop tilt_pwm:", e)
         GPIO.cleanup()
-        self.pan_pwm.stop()
-        self.tilt_pwm.stop()
         
 
     def track(self, image):
