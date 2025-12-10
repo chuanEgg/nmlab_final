@@ -159,12 +159,12 @@ def init_camera(retries=5):
             print(f"Camera busy, retry {i+1}/{retries}")
             time.sleep(1)
     raise RuntimeError("Failed to initialize camera after retries")
-def tracker_task(stop_event):
+def tracker_task(stop_event, picamera2):
     """Thread loop, controlled by stop_event"""
     tracker = FaceTracker()
     time.sleep(2)
 
-    picamera2 = init_camera()
+    #picamera2 = init_camera()
 
 
     frame_count = 0
@@ -181,7 +181,5 @@ def tracker_task(stop_event):
 
     except Exception as e:
         print("Exception in tracker_task:", e)
-    finally:
-        GPIO.cleanup()
-        picamera2.stop()
+
     

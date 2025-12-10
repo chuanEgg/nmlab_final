@@ -6,7 +6,7 @@ from datetime import datetime, timezone, timedelta
 import math
 import threading
 import time
-from tracker import tracker_task
+import tracker
 
 def calculate_level(score):
     return math.floor((-1 + math.sqrt(1 + 0.16 * score)) / 2)
@@ -232,7 +232,7 @@ def long_task():
 
 @app.route("/button/toggle", methods=["POST"])
 def toggle_button():
-    global task_thread, stop_event
+    global task_thread, stop_event,picamera2
 
     current = read_status()
     new_status = 0 if current == 1 else 1
@@ -245,7 +245,7 @@ def toggle_button():
             task_thread.join()
 
         stop_event.clear()
-        task_thread = threading.Thread(target=tracker_task, args=(stop_event,))
+        task_thread = threading.Thread(target=tracker.tracker_task, args=(stop_event,picamera2))
         task_thread.start()
         #start_session_internal("Allen")
         return jsonify({"msg": "Tracker started"}), 202
@@ -254,7 +254,6 @@ def toggle_button():
         stop_event.set()
         if task_thread is not None:
             task_thread.join()   # 等 thread 結束
-        tracker_task
         #stop_session_internal("Allen")
         #append_score_internal("Allen", 10)
         return jsonify({"msg": "Tracker stopped"}), 200
@@ -324,4 +323,5 @@ def append_score_internal(username, score_value):
     )
 
 if __name__ == '__main__':
+    picamera2 = tracker.init_camera()
     app.run(host='0.0.0.0', port=8000)
