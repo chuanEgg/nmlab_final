@@ -247,15 +247,15 @@ def toggle_button():
         stop_event.clear()
         task_thread = threading.Thread(target=tracker.tracker_task, args=(stop_event,picamera2))
         task_thread.start()
-        #start_session_internal("Allen")
+        start_session_internal("Allen")
         return jsonify({"msg": "Tracker started"}), 202
 
     else:
         stop_event.set()
         if task_thread is not None:
             task_thread.join()   # 等 thread 結束
-        #stop_session_internal("Allen")
-        #append_score_internal("Allen", 10)
+        stop_session_internal("Allen")
+        append_score_internal("Allen", 10)
         return jsonify({"msg": "Tracker stopped"}), 200
 
 
