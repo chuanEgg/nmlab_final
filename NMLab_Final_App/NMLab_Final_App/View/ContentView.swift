@@ -22,8 +22,8 @@ struct ContentView: View {
         RankView()
       }
 
-      Tab("Control", systemImage: "switch.2") {
-        ControlView()
+      Tab("Camera", systemImage: "camera.fill") {
+        CameraView()
       }
     }
   }

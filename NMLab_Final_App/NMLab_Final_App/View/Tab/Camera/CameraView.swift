@@ -9,9 +9,9 @@ import Foundation
 import SwiftUI
 import UIKit
 
-struct ControlView: View {
+struct CameraView: View {
   @State private var status: FocusButtonStatus?
-  @State private var statusMessage: String = ""
+  @State private var statusMessage: String = "Loading..."
   @State private var isLoading = false
   @State private var latestPhoto: UIImage?
   @State private var isLoadingPhoto = false
@@ -24,19 +24,9 @@ struct ControlView: View {
   var body: some View {
     NavigationStack {
       VStack(spacing: 16) {
-        statusLabel
-        elapsedTimerView
         photoView
-
-        toggleButton
-        refreshButton
-//        if !statusMessage.isEmpty {
-//          Text(statusMessage)
-//            .font(.footnote)
-//            .foregroundStyle(.secondary)
-//        }
-               
-
+        statusInfoCard
+        controlsButtons
         Spacer()
       }
       .padding()
@@ -51,6 +41,7 @@ struct ControlView: View {
         while !shouldStopAutoRefresh {
           try? await Task.sleep(nanoseconds: 5_000_000_000)
           await loadPhoto(force: true)
+          await loadTrackerStatusMessage()
         }
       }
       .refreshable {
@@ -74,37 +65,39 @@ struct ControlView: View {
     }
   }
 
-  private var statusLabel: some View {
-    Group {
-      if let status {
-        Text(statusText(for: status.buttonStatus))
-          .font(.title2.weight(.semibold))
-          .padding()
-          .frame(maxWidth: .infinity)
-          // .background(status.buttonStatus == 1 ? Color.green.opacity(0.2) : Color.red.opacity(0.2))
-          .background(status.buttonStatus == 1 ? Color.green.opacity(1) : Color.red.opacity(1))
-          .clipShape(RoundedRectangle(cornerRadius: 24))
-      } else if isLoading {
-        ProgressView("Loading status...")
-      } else {
-        Text("Status unknown")
-          .foregroundStyle(.secondary)
-      }
+  private var controlsButtons: some View {
+    HStack(spacing: 12) {
+      toggleButton
+      refreshButton
     }
   }
 
-  private var elapsedTimerView: some View {
-    HStack {
-      Spacer()
-      Image(systemName: "clock")
-        .foregroundStyle(.secondary)
-      Text(activeStartAt == nil ? "Timer: inactive" : "Elapsed: \(elapsedDisplay)")
-        .font(.subheadline.weight(.semibold))
-        .foregroundStyle(.primary)
-      Spacer()
+  private var statusInfoCard: some View {
+    VStack(alignment: .leading, spacing: 8) {
+      HStack(alignment: .firstTextBaseline, spacing: 8) {
+        Image(systemName: "face.smiling")
+        Text(statusMessage)
+          .font(.headline.weight(.semibold))
+          .foregroundStyle(.primary)
+        Spacer()
+      }
+
+      Divider()
+
+      HStack(alignment: .firstTextBaseline, spacing: 8) {
+        Image(systemName: "clock")
+          .foregroundStyle(.secondary)
+        Text(activeStartAt == nil ? "Timer: Inactive" : "Has focused: \(elapsedDisplay)")
+          .font(.headline.weight(.semibold))
+          .foregroundStyle(.primary)
+        Spacer()
+      }
     }
-//    .shadow(radius: 5)
-    .padding(.horizontal, 4)
+    .padding()
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .background(Color(uiColor: .secondarySystemBackground))
+    .clipShape(RoundedRectangle(cornerRadius: 16))
+    .shadow(radius: 4)
   }
 
   private var toggleButton: some View {
@@ -114,14 +107,47 @@ struct ControlView: View {
         await loadStatus()
       }
     } label: {
-      Text("Toggle Button")
-        .font(.title2.weight(.semibold))
-        .padding(5)
-        .frame(maxWidth: .infinity)
+      toggleButtonTitle
     }
-    .buttonStyle(.borderedProminent)
-//    .shadow(radius: 5)
+    .buttonStyle(.plain)
+    .frame(maxWidth: .infinity, minHeight: 52)
+    .background(toggleButtonColor)
+    .foregroundStyle(.white)
+    .clipShape(RoundedRectangle(cornerRadius: 14))
+    .overlay(
+      RoundedRectangle(cornerRadius: 14)
+        .stroke(Color.primary.opacity(0.05), lineWidth: 1)
+    )
     .disabled(isLoading)
+  }
+
+  private var toggleButtonTitle: some View {
+    if let status, status.buttonStatus == 1 {
+      HStack {
+        Image(systemName: "stop.fill")
+          .resizable()
+          .scaledToFit()
+          .frame(height: 18)
+        Text("Stop")
+          .font(.title2.weight(.semibold))
+      }
+    } else {
+      HStack {
+        Image(systemName: "play.fill")
+          .resizable()
+          .scaledToFit()
+          .frame(height: 18)
+        Text("Start")
+          .font(.title2.weight(.semibold))
+      }
+    }
+  }
+
+  private var toggleButtonColor: Color {
+    if let status, status.buttonStatus == 1 {
+      return Color.green.opacity(1)
+    }
+    return Color.red.opacity(1)
   }
 
   private var refreshButton: some View {
@@ -131,8 +157,24 @@ struct ControlView: View {
         await loadPhoto(force: true)
       }
     } label: {
-      Label("Refresh", systemImage: "arrow.clockwise")
+      HStack {
+        Image(systemName: "arrow.clockwise")
+          .resizable()
+          .scaledToFit()
+          .frame(height: 18)
+        Text("Refresh")
+          .font(.title2.weight(.semibold))
+      }
     }
+    .buttonStyle(.plain)
+    .frame(maxWidth: .infinity, minHeight: 52)
+    .background(Color.accentColor)
+    .foregroundStyle(.white)
+    .clipShape(RoundedRectangle(cornerRadius: 14))
+    .overlay(
+      RoundedRectangle(cornerRadius: 14)
+        .stroke(Color.primary.opacity(0.05), lineWidth: 1)
+    )
     .disabled(isLoading)
   }
 
@@ -166,7 +208,7 @@ struct ControlView: View {
 
 }
 
-extension ControlView {
+extension CameraView {
   func statusText(for value: Int) -> String {
     value == 1 ? "Camera Status: ON" : "Camera Status: OFF"
   }
@@ -186,8 +228,9 @@ extension ControlView {
         switch result {
         case .success(let newStatus):
           status = newStatus
-          statusMessage = "Updated just now"
+          statusMessage = "Fetching tracker status..."
           syncActiveStart(from: newStatus)
+          Task { await loadTrackerStatusMessage() }
         case .failure(let error):
           statusMessage = error.localizedDescription
         }
@@ -290,10 +333,25 @@ extension ControlView {
       elapsedDisplay = "—"
     }
   }
+
+  @MainActor
+  func loadTrackerStatusMessage() async {
+    await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+      getTrackerStatus { result in
+        switch result {
+        case .success(let message):
+          statusMessage = message
+        case .failure(let error):
+          statusMessage = error.localizedDescription
+        }
+        continuation.resume()
+      }
+    }
+  }
 }
 
 
 
 #Preview {
-  ControlView()
+  CameraView()
 }
