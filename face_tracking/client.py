@@ -20,4 +20,6 @@ def Client(frame ,ws):
 
     
     print(f"Score: {data['score']}, Status: {data['status']}")
+    with open("face_tracking/status.txt", "w") as f:
+        f.write(data['status'])
     return processed_frame,  data['status']
