@@ -145,9 +145,9 @@ struct CameraView: View {
 
   private var toggleButtonColor: Color {
     if let status, status.buttonStatus == 1 {
-      return Color.green.opacity(1)
+      return Color.red.opacity(1)
     }
-    return Color.red.opacity(1)
+    return Color.green.opacity(1)
   }
 
   private var refreshButton: some View {
