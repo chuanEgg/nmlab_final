@@ -10,7 +10,7 @@ import mediapipe as mp
 from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 
-from utils import visualize
+from face_tracking.utils import visualize
 
 class FaceDetector:
     def __init__(self, model_path: str, \

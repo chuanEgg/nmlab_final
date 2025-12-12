@@ -1,13 +1,14 @@
 import time
 import RPi.GPIO as GPIO
-from utils import angle_to_duty_cycle, angle_to_gpiozero_value, setup_servo, setup_servo_gpiozero
-from detector import FaceDetector
-from controller import PIDController
-
+from face_tracking.utils import angle_to_duty_cycle, angle_to_gpiozero_value, setup_servo, setup_servo_gpiozero
+from face_tracking.detector import FaceDetector
+from face_tracking.controller import PIDController
 import cv2
 from picamera2 import Picamera2
 import asyncio
 import os
+import websocket
+from face_tracking.client import Client
 
 class FaceTracker:
     def __init__(self):
@@ -109,7 +110,6 @@ class FaceTracker:
         target_pan = self.pan_angle - output_x
         target_tilt = self.tilt_angle + output_y
         self.move_to(target_pan, target_tilt)
-        
         # Clamp angles to valid range
         # target_pan = max(0, min(180, target_pan))
         # target_tilt = max(0, min(180, target_tilt))
@@ -146,20 +146,14 @@ if __name__ == '__main__':
         if tracker:
             tracker.cleanup()
 
-def init_camera():
-    try:
-        picamera2 = Picamera2()
-        config = picamera2.create_preview_configuration(main={"format": "RGB888", "size": (800, 600)},transform=Picamera2.Transform.VFLIP)
-        picamera2.configure(config)
-        picamera2.start()
-        return picamera2
-    except RuntimeError as e:
-        time.sleep(1)
 
 
 def tracker_task(stop_event, picamera2):
     """Thread loop, controlled by stop_event"""
     tracker = FaceTracker()
+    ws = websocket.WebSocket()
+    ws.connect("ws://jasondemacbook.local:8765")
+
     time.sleep(2)
 
     #picamera2 = init_camera()
@@ -169,18 +163,17 @@ def tracker_task(stop_event, picamera2):
     try:
         while not stop_event.is_set():
             frame = picamera2.capture_array()
-
-            
             frame_count += 1
             if frame_count % 4 != 0:
                 continue
-            cv2.imwrite("latest.jpg", cv2.flip(frame,0))
-            print("Tracker running...")
+            flip_frame = cv2.flip(frame,0)
+            processed_frame,  status = Client(flip_frame, ws)
             
+            cv2.imwrite("face_tracking/latest.jpg", processed_frame )
+            print(status)
             
-
             frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            tracker.track(frame_rgb)
+            #tracker.track(frame_rgb)
             
 
     except Exception as e:

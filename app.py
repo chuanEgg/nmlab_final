@@ -7,7 +7,9 @@ import math
 import threading
 import time
 #import tracker
-from  face_tracking.tracker import tracker_task, init_camera
+from  face_tracking.tracker import tracker_task
+from picamera2 import Picamera2
+import cv2
 
 def calculate_level(score):
     return math.floor((-1 + math.sqrt(1 + 0.16 * score)) / 2)
@@ -16,7 +18,7 @@ stop_event = threading.Event()
 task_thread = None  # 全域保存 thread 物件
 button_status = 0
 # --- 設定區 ---
-PHOTO_PATH = "latest.jpg"
+PHOTO_PATH = "face_tracking/latest.jpg"
 # MongoDB 連線
 MONGO_URI = "mongodb+srv://hsiehjason00:hsiehjason00@cluster0.wiei66x.mongodb.net/?appName=Cluster0"
 client = MongoClient(MONGO_URI)
@@ -146,7 +148,6 @@ def long_task():
 @app.route("/button/toggle", methods=["POST"])
 def toggle_button():
     global task_thread, stop_event,picamera2, button_status
-
     current = button_status
     print(f"Current button status: {current}")
     new_status = 0 if current == 1 else 1
@@ -159,18 +160,18 @@ def toggle_button():
             task_thread.join()
 
         stop_event.clear()
-        #task_thread = threading.Thread(target=tracker.tracker_task, args=(stop_event,picamera2))
-        task_thread = threading.Thread(target=long_task)
+        task_thread = threading.Thread(target=tracker_task, args=(stop_event,picamera2))
+        #task_thread = threading.Thread(target=long_task)
         task_thread.start()
-        start_session_internal("Allen")
+        #start_session_internal("Allen")
         return jsonify({"msg": "Tracker started"}), 202
 
     else:
         stop_event.set()
         if task_thread is not None:
             task_thread.join()   # 等 thread 結束
-        stop_session_internal("Allen")
-        append_score_internal("Allen", 50)
+        #stop_session_internal("Allen")
+        #append_score_internal("Allen", 50)
         return jsonify({"msg": "Tracker stopped"}), 200
 
 
@@ -238,5 +239,9 @@ def append_score_internal(username, score_value):
     )
 
 if __name__ == '__main__':
-    #picamera2 = tracker.init_camera()
+    picamera2 = Picamera2()
+    config = picamera2.create_preview_configuration(main={"format": "RGB888", "size": (800, 600)})
+    picamera2.configure(config)
+    picamera2.start()
+
     app.run(host='0.0.0.0', port=8000)
