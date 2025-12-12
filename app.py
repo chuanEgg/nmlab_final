@@ -6,14 +6,15 @@ from datetime import datetime, timezone, timedelta
 import math
 import threading
 import time
-import tracker
+#import tracker
+from  face_tracking.tracker import tracker_task, init_camera
 
 def calculate_level(score):
     return math.floor((-1 + math.sqrt(1 + 0.16 * score)) / 2)
 app = Flask(__name__)
 stop_event = threading.Event()
 task_thread = None  # 全域保存 thread 物件
-
+button_status = 0
 # --- 設定區 ---
 PHOTO_PATH = "latest.jpg"
 # MongoDB 連線
@@ -89,94 +90,8 @@ def get_status(username):
             user["level"] = level
 
         return jsonify(all_users)
-# 功能 3: 更新玩家資料
-@app.route('/update/<username>', methods=['POST'])
-def update_user(username):
-    incoming_data = request.json if request.is_json else {}
-
-    # 如果玩家不存在，建立預設值
-    default_data = {
-        "username": username,
-        "score": 0,
-        "level": 1,
-        "scores": [],
-        "sessions": []
-    }
-
-    users_collection.update_one(
-        {"username": username},
-        {"$setOnInsert": default_data},
-        upsert=True
-    )
 
 
-    # 更新簡單欄位（score, level）
-    for field in ["score", "level"]:
-        if field in incoming_data:
-            update_fields[field] = incoming_data[field]
-
-    # play_time 要是 array
-    if "scores" in incoming_data:
-        if isinstance(incoming_data["scores"], list):
-            update_fields["scores"] = incoming_data["scores"]
-        else:
-            return jsonify({"error": "scores must be an array"}), 400
-
-    # 更新 sessions（整個覆蓋）
-    if "sessions" in incoming_data:
-        if isinstance(incoming_data["sessions"], list):
-            update_fields["sessions"] = incoming_data["sessions"]
-        else:
-            return jsonify({"error": "sessions must be an array"}), 400
-
-    # 做更新
-    if update_fields:
-        users_collection.update_one(
-            {"username": username},
-            {"$set": update_fields}
-        )
-
-    user = users_collection.find_one({"username": username})
-    user["_id"] = str(user["_id"])
-    return jsonify({"message": "Updated", "data": user})
-
-
-@app.route('/session/<username>', methods=['POST'])
-def add_single_session(username):
-    incoming = request.json or {}
-
-    # 檢查格式
-    if "start_time" not in incoming or "end_time" not in incoming:
-        return jsonify({"error": "JSON must include start_time and end_time"}), 400
-
-    # 確保 user 存在（不存在就建立）
-    users_collection.update_one(
-        {"username": username},
-        {
-            "$setOnInsert": {
-                "username": username,
-                "score": 0,
-                "level": 1,
-                "scores": 0,
-                "sessions": []
-            }
-        },
-        upsert=True
-    )
-
-    # 新 session 物件
-    new_session = {
-        "start_time": incoming["start_time"],
-        "end_time": incoming["end_time"]
-    }
-
-    # append 到 sessions 陣列
-    users_collection.update_one(
-        {"username": username},
-        {"$push": {"sessions": new_session}}
-    )
-
-    return jsonify({"message": "Session added", "session": new_session})
 
 @app.route('/users', methods=['GET'])
 def get_all_users():
@@ -193,36 +108,34 @@ def rank_by_score():
     ).sort("score", -1))       # -1 表示降序
     return jsonify(users)
 
-@app.route('/session/start/<username>', methods=['POST'])
-def start_session(username):
-    session_info = start_session_internal(username)
-    return jsonify({
-        "message": "Session started",
-        "session": session_info
-    })
 
 
-STATUS_FILE = "status.txt"
 
+STATUS_FILE = "face_tracking/status.txt"
+def write_status(parameter, value):
+    """
+    更新 cam collection 指定欄位的值
+    button 存布林，tracker 存字串
+    """
+    global button_status
+    if parameter == "button":
+        button_status = value
+    elif parameter == "tracker":
+        with open(STATUS_FILE, "w") as f:
+            f.write(value)
+        
+    
 
-def read_status():
-    if not os.path.exists(STATUS_FILE):
-        return 0  # default = OFF
+@app.route("/tracker/status", methods=["GET"])
+def get_tracker_status():
     with open(STATUS_FILE, "r") as f:
-        return int(f.read().strip())
-
-
-def write_status(value):
-    with open(STATUS_FILE, "w") as f:
-        f.write(str(value))
-
+        tracker_string = f.read().strip()
+    return jsonify({"tracker_status": tracker_string})
 
 @app.route("/button/status", methods=["GET"])
 def get_button_status():
-    s = read_status()
-    global task_thread, stop_event
-    
-    return jsonify({"button_status": s, "task_thread": str(task_thread)})
+    global button_status
+    return jsonify({"button_status": button_status})
 
 def long_task():
     while not stop_event.is_set():
@@ -232,11 +145,12 @@ def long_task():
 
 @app.route("/button/toggle", methods=["POST"])
 def toggle_button():
-    global task_thread, stop_event,picamera2
+    global task_thread, stop_event,picamera2, button_status
 
-    current = read_status()
+    current = button_status
+    print(f"Current button status: {current}")
     new_status = 0 if current == 1 else 1
-    write_status(new_status)
+    write_status("button", new_status)
 
     if new_status == 1:
         # 等上一次 thread 完全結束
@@ -245,7 +159,8 @@ def toggle_button():
             task_thread.join()
 
         stop_event.clear()
-        task_thread = threading.Thread(target=tracker.tracker_task, args=(stop_event,picamera2))
+        #task_thread = threading.Thread(target=tracker.tracker_task, args=(stop_event,picamera2))
+        task_thread = threading.Thread(target=long_task)
         task_thread.start()
         start_session_internal("Allen")
         return jsonify({"msg": "Tracker started"}), 202
@@ -255,7 +170,7 @@ def toggle_button():
         if task_thread is not None:
             task_thread.join()   # 等 thread 結束
         stop_session_internal("Allen")
-        append_score_internal("Allen", 10)
+        append_score_internal("Allen", 50)
         return jsonify({"msg": "Tracker stopped"}), 200
 
 
@@ -323,5 +238,5 @@ def append_score_internal(username, score_value):
     )
 
 if __name__ == '__main__':
-    picamera2 = tracker.init_camera()
+    #picamera2 = tracker.init_camera()
     app.run(host='0.0.0.0', port=8000)

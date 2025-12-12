@@ -147,18 +147,16 @@ if __name__ == '__main__':
         if tracker:
             tracker.cleanup()
 
-def init_camera(retries=5):
-    for i in range(retries):
-        try:
-            picamera2 = Picamera2()
-            config = picamera2.create_preview_configuration(main={"format": "RGB888", "size": (800, 600)})
-            picamera2.configure(config)
-            picamera2.start()
-            return picamera2
-        except RuntimeError as e:
-            print(f"Camera busy, retry {i+1}/{retries}")
-            time.sleep(1)
-    raise RuntimeError("Failed to initialize camera after retries")
+def init_camera():
+    try:
+        picamera2 = Picamera2()
+        config = picamera2.create_preview_configuration(main={"format": "RGB888", "size": (800, 600)})
+        picamera2.configure(config)
+        picamera2.start()
+        return picamera2
+    except RuntimeError as e:
+        time.sleep(1)
+
 
 def tracker_task(stop_event, picamera2):
     """Thread loop, controlled by stop_event"""
