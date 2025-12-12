@@ -74,8 +74,8 @@ class FocusAnalyzer:
         CENTER_X, CENTER_Y = w // 2, h // 2
 
         # 1. 鏡像翻轉
-        frame = cv2.flip(frame, 1)
-        rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        
+        rgb_frame = frame
 
         # 2. YOLO 手機偵測
         phone_detected = False
