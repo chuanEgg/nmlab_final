@@ -4,7 +4,8 @@ import numpy as np
 from ultralytics import YOLO
 from collections import deque
 import math
-
+from picamera2 import Picamera2
+from libcamera import Transform
 class FocusAnalyzer:
     def __init__(self):
         print("初始化分析大腦...")
@@ -207,14 +208,15 @@ class FocusAnalyzer:
 if __name__ == "__main__":
     try:
         analyzer = FocusAnalyzer()
-        cap = cv2.VideoCapture(0)
-        
-        cap.set(cv2.CAP_PROP_FRAME_WIDTH, 800)
-        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 600)
 
+
+        picam2 = Picamera2()
+        config = picam2.create_preview_configuration(main={"format": "RGB888", "size": (800, 600)})
+        picam2.configure(config)
+        picam2.start()
         while True:
-            ret, frame = cap.read()
-            if not ret:
+            frame = picam2.capture_array()
+            if frame is None:
                 break
 
             processed_frame, score, status = analyzer.process_frame(frame)
@@ -226,6 +228,5 @@ if __name__ == "__main__":
                 break
         
     finally:
-        if 'cap' in locals() and cap.isOpened():
-            cap.release()
+        picam2.stop()
         cv2.destroyAllWindows()
