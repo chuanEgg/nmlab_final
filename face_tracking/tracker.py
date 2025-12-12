@@ -149,7 +149,7 @@ if __name__ == '__main__':
 def init_camera():
     try:
         picamera2 = Picamera2()
-        config = picamera2.create_preview_configuration(main={"format": "RGB888", "size": (800, 600)})
+        config = picamera2.create_preview_configuration(main={"format": "RGB888", "size": (800, 600)},transform=Picamera2.Transform.VFLIP)
         picamera2.configure(config)
         picamera2.start()
         return picamera2
