@@ -8,7 +8,7 @@ import threading
 import time
 #import tracker
 from  face_tracking.tracker import tracker_task
-from face_tracking.client import tracking_status
+import face_tracking.client 
 from picamera2 import Picamera2
 import cv2
 
@@ -25,7 +25,8 @@ MONGO_URI = "mongodb+srv://hsiehjason00:hsiehjason00@cluster0.wiei66x.mongodb.ne
 client = MongoClient(MONGO_URI)
 db = client['focusmate_db']
 users_collection = db['users']
-
+with open("face_tracking/latest.jpg", "wb") as f, open("face_tracking/pika.jpg", "rb") as pika:
+    f.write(pika.read())
 try:
     client.admin.command('ping')
     print("Pinged your deployment. You successfully connected to MongoDB!")
@@ -46,6 +47,22 @@ def get_latest_photo():
             return Response(image_data, mimetype='image/jpeg')
     except FileNotFoundError:
         return jsonify({"error": "Photo not found yet"}), 404
+
+@app.route('/video_feed')
+def video_feed():
+    def generate():
+        while True:
+            if face_tracking.client.processed_frame is None:
+                continue
+            # MJPEG 需要把 frame encode 成 JPEG
+            ret, jpeg = cv2.imencode('.jpg', face_tracking.client.processed_frame)
+            if not ret:
+                continue
+            frame_bytes = jpeg.tobytes()
+            # MJPEG multipart 格式
+            yield (b'--frame\r\n'
+                   b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
+    return Response(generate(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 # 功能 2: 查玩家資料或所有玩家
 @app.route('/status', defaults={'username': None}, methods=['GET'])
@@ -120,8 +137,8 @@ def rank_by_score():
 def get_tracker_status():
     #with open(STATUS_FILE, "r") as f:
         #tracker_string = f.read().strip()
-    global tracking_status
-    return jsonify({"tracker_status": tracking_status})
+    
+    return jsonify({"tracker_status": face_tracking.client.tracking_status})
 
 @app.route("/button/status", methods=["GET"])
 def get_button_status():
@@ -159,10 +176,12 @@ def toggle_button():
         stop_event.set()
         if task_thread is not None:
             task_thread.join()   # 等 thread 結束
-        with open("face_tracking/status.txt", "w") as f:
-            f.write("Not Running!")
+
         #stop_session_internal("Allen")
         #append_score_internal("Allen", random.randint(50, 100))
+        face_tracking.client.tracking_status = "Not Running!"
+        with open("face_tracking/latest.jpg", "wb") as f, open("face_tracking/pika.jpg", "rb") as pika:
+            f.write(pika.read())
         return jsonify({"msg": "Tracker stopped"}), 200
 
 

@@ -3,8 +3,9 @@ import base64
 import json
 import numpy as np
 tracking_status = "Not Running!"
+processed_frame = None
 def Client(frame ,ws):
-    global tracking_status
+    global tracking_status, processed_frame
     _, jpeg = cv2.imencode('.jpg', frame)
     frame_b64 = base64.b64encode(jpeg.tobytes()).decode()
 
@@ -23,4 +24,6 @@ def Client(frame ,ws):
     
     print(f"Score: {data['score']}, Status: {data['status']}")
     tracking_status = data['status']
+    #cv2.imshow("Processed Frame", processed_frame)
+
     cv2.imwrite("face_tracking/latest.jpg", processed_frame )

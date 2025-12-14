@@ -150,11 +150,11 @@ if __name__ == '__main__':
 
 def tracker_task(stop_event, picamera2):
     """Thread loop, controlled by stop_event"""
-    tracker = FaceTracker()
+    #tracker = FaceTracker()
     ws = websocket.WebSocket()
     ws.connect("ws://jasondemacbook.local:8765")
 
-    time.sleep(2)
+    time.sleep(3)
 
     #picamera2 = init_camera()
 
@@ -169,7 +169,7 @@ def tracker_task(stop_event, picamera2):
             Client(frame, ws)
             
             frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            tracker.track(frame_rgb)
+            #tracker.track(frame_rgb)
             
 
     except Exception as e:
