@@ -134,7 +134,7 @@ if __name__ == '__main__':
             
             # Skip frames to reduce load
             frame_count += 1
-            if frame_count % 3 != 0:
+            if frame_count % 4 != 0:
                 continue
                 
             rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -166,14 +166,10 @@ def tracker_task(stop_event, picamera2):
             frame_count += 1
             if frame_count % 4 != 0:
                 continue
-            flip_frame = cv2.flip(frame,0)
-            processed_frame,  status = Client(flip_frame, ws)
-            
-            cv2.imwrite("face_tracking/latest.jpg", processed_frame )
-            print(status)
+            Client(frame, ws)
             
             frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            #tracker.track(frame_rgb)
+            tracker.track(frame_rgb)
             
 
     except Exception as e:

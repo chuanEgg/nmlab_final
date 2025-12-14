@@ -8,6 +8,7 @@ import threading
 import time
 #import tracker
 from  face_tracking.tracker import tracker_task
+from face_tracking.client import tracking_status
 from picamera2 import Picamera2
 import cv2
 
@@ -113,26 +114,14 @@ def rank_by_score():
 
 
 
-STATUS_FILE = "face_tracking/status.txt"
-def write_status(parameter, value):
-    """
-    更新 cam collection 指定欄位的值
-    button 存布林，tracker 存字串
-    """
-    global button_status
-    if parameter == "button":
-        button_status = value
-    elif parameter == "tracker":
-        with open(STATUS_FILE, "w") as f:
-            f.write(value)
-        
-    
+
 
 @app.route("/tracker/status", methods=["GET"])
 def get_tracker_status():
-    with open(STATUS_FILE, "r") as f:
-        tracker_string = f.read().strip()
-    return jsonify({"tracker_status": tracker_string})
+    #with open(STATUS_FILE, "r") as f:
+        #tracker_string = f.read().strip()
+    global tracking_status
+    return jsonify({"tracker_status": tracking_status})
 
 @app.route("/button/status", methods=["GET"])
 def get_button_status():
@@ -151,7 +140,7 @@ def toggle_button():
     current = button_status
     print(f"Current button status: {current}")
     new_status = 0 if current == 1 else 1
-    write_status("button", new_status)
+    button_status = new_status
 
     if new_status == 1:
         # 等上一次 thread 完全結束
@@ -170,8 +159,10 @@ def toggle_button():
         stop_event.set()
         if task_thread is not None:
             task_thread.join()   # 等 thread 結束
+        with open("face_tracking/status.txt", "w") as f:
+            f.write("Not Running!")
         #stop_session_internal("Allen")
-        #append_score_internal("Allen", 50)
+        #append_score_internal("Allen", random.randint(50, 100))
         return jsonify({"msg": "Tracker stopped"}), 200
 
 
