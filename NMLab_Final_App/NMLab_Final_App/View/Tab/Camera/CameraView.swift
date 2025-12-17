@@ -30,16 +30,29 @@ struct CameraView: View {
         Spacer()
       }
       .padding()
-      .navigationTitle("Camera Control")
+      .navigationTitle("Camera")
+      .toolbar {
+        NavigationLink {
+          BaseURLSettingsView {
+            Task {
+              await loadStatus(force: true)
+              await loadPhoto(force: true)
+              await loadTrackerStatusMessage()
+            }
+          }
+        } label: {
+          Image(systemName: "gearshape")
+        }
+      }
       .task {
         await loadStatus()
         await loadPhoto()
       }
       .task {
-        // Auto-refresh the photo every 5 seconds while the view is active
+        // Auto-refresh the photo every 0.5 seconds while the view is active
         shouldStopAutoRefresh = false
         while !shouldStopAutoRefresh {
-          try? await Task.sleep(nanoseconds: 5_000_000_000)
+          try? await Task.sleep(nanoseconds: 200_000_000)
           await loadPhoto(force: true)
           await loadTrackerStatusMessage()
         }
@@ -189,7 +202,7 @@ struct CameraView: View {
             .clipShape(RoundedRectangle(cornerRadius: 24))
             .shadow(radius: 4)
         } else {
-          ProgressView("Loading photo...")
+//          ProgressView("Loading photo...")
         }
       } else if let latestPhoto {
         Image(uiImage: latestPhoto)
@@ -349,7 +362,6 @@ extension CameraView {
     }
   }
 }
-
 
 
 #Preview {

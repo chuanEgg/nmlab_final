@@ -38,8 +38,7 @@ private struct TrackerStatusResponse: Decodable {
 
 /// Fetches the latest tracker status message.
 func getTrackerStatus(completion: @escaping (Result<String, Error>) -> Void) {
-  let urlString = "https://icd-hw.onrender.com/tracker/status"
-  guard let url = URL(string: urlString) else {
+  guard let url = APIConfig.url(for: "/tracker/status") else {
     completion(.failure(TrackerStatusError.invalidURL))
     return
   }

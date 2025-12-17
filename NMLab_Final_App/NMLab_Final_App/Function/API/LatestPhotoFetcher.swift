@@ -32,8 +32,7 @@ enum LatestPhotoError: LocalizedError {
 }
 
 func fetchLatestPhoto(completion: @escaping (Result<UIImage, Error>) -> Void) {
-  let urlString = "https://icd-hw.onrender.com/latest_photo"
-  guard let url = URL(string: urlString) else {
+  guard let url = APIConfig.url(for: "/latest_photo") else {
     completion(.failure(LatestPhotoError.invalidURL))
     return
   }

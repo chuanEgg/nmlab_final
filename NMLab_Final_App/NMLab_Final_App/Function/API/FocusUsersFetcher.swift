@@ -28,8 +28,7 @@ enum FocusUsersError: LocalizedError {
 }
 
 func getFocusUsers(completion: @escaping (Result<[String], Error>) -> Void) {
-  let baseURL = "https://icd-hw.onrender.com/users"
-  guard let url = URL(string: baseURL) else {
+  guard let url = APIConfig.url(for: "/users") else {
     completion(.failure(FocusUsersError.invalidURL))
     return
   }

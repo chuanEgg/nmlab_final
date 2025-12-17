@@ -34,8 +34,7 @@ enum FocusDataError: LocalizedError {
 }
 
 func getFocusData(user: String, completion: @escaping (Result<FocusData, Error>) -> Void) {
-  let baseURL = "https://icd-hw.onrender.com/status"
-  guard let url = URL(string: "\(baseURL)/\(user)") else {
+  guard let url = APIConfig.url(for: "/status/\(user)") else {
     completion(.failure(FocusDataError.invalidURL))
     return
   }

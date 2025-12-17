@@ -24,8 +24,7 @@ enum FocusButtonError: LocalizedError {
 }
 
 func getFocusStatus(completion: @escaping (Result<FocusButtonStatus, Error>) -> Void) {
-  let urlString = "https://icd-hw.onrender.com/button/status"
-  guard let url = URL(string: urlString) else {
+  guard let url = APIConfig.url(for: "/button/status") else {
     completion(.failure(FocusButtonError.invalidURL))
     return
   }
@@ -68,8 +67,7 @@ func getFocusStatus(completion: @escaping (Result<FocusButtonStatus, Error>) -> 
 }
 
 func toggleFocusStatus(completion: @escaping (Result<FocusButtonStatus, Error>) -> Void) {
-  let urlString = "https://icd-hw.onrender.com/button/toggle"
-  guard let url = URL(string: urlString) else {
+  guard let url = APIConfig.url(for: "/button/toggle") else {
     completion(.failure(FocusButtonError.invalidURL))
     return
   }

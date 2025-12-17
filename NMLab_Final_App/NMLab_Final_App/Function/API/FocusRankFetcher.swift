@@ -28,8 +28,7 @@ enum FocusRankError: LocalizedError {
 }
 
 func getFocusRank(completion: @escaping (Result<[FocusRankData], Error>) -> Void) {
-  let baseURL = "https://icd-hw.onrender.com/rank"
-  guard let url = URL(string: baseURL) else {
+  guard let url = APIConfig.url(for: "/rank") else {
     completion(.failure(FocusRankError.invalidURL))
     return
   }
