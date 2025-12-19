@@ -55,22 +55,6 @@ def get_latest_photo():
     except FileNotFoundError:
         return jsonify({"error": "Photo not found yet"}), 404
 
-@app.route('/video_feed')
-def video_feed():
-    def generate():
-        while True:
-            if face_tracking.client.processed_frame is None:
-                continue
-            # MJPEG 需要把 frame encode 成 JPEG
-            ret, jpeg = cv2.imencode('.jpg', face_tracking.client.processed_frame)
-            if not ret:
-                continue
-            frame_bytes = jpeg.tobytes()
-            # MJPEG multipart 格式
-            yield (b'--frame\r\n'
-                   b'Content-Type: image/jpeg\r\n\r\n' + frame_bytes + b'\r\n')
-    return Response(generate(), mimetype='multipart/x-mixed-replace; boundary=frame')
-
 # 功能 2: 查玩家資料或所有玩家
 @app.route('/status', defaults={'username': None}, methods=['GET'])
 @app.route('/status/<username>', methods=['GET'])
