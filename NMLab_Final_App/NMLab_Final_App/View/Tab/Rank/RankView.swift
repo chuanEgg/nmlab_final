@@ -13,6 +13,7 @@ struct RankView: View {
   @State private var isLoading = false
   @State private var lastUpdatedAt: Date? = nil
   @State private var hasLoadedOnce = false
+  @AppStorage("currentUsername") private var currentUsername: String = "Allen"
 
   var body: some View {
     NavigationStack {
@@ -35,10 +36,18 @@ struct RankView: View {
                   .foregroundStyle(.secondary)
               }
               Spacer()
-              if index == 0 {
-                Image(systemName: "crown.fill")
-                  .foregroundColor(.yellow)
-              }
+            if index == 0 {
+              Image(systemName: "crown.fill")
+                .foregroundColor(.yellow)
+            }
+            if entry.username == currentUsername {
+//              Image(systemName: "checkmark.circle.fill")
+//                .foregroundStyle(.green)
+              Text("You")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+            }
+
             }
           }
         }
