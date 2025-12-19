@@ -35,7 +35,7 @@ struct CameraView: View {
       .navigationTitle("Camera")
       .toolbar {
         NavigationLink {
-          BaseURLSettingsView {
+          SettingsView {
             Task {
               await loadStatus(force: true)
               await loadPhoto(force: true)

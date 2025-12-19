@@ -7,8 +7,9 @@
 import SwiftUI
 import Foundation
 
-struct BaseURLSettingsView: View {
+struct SettingsView: View {
   @State private var baseURL: String = APIConfig.baseURL
+  @State private var selectedAccent: AppTheme.AccentChoice = AppTheme.accentChoice
   @Environment(\.dismiss) private var dismiss
   var onSave: (() -> Void)? = nil
 
@@ -19,6 +20,20 @@ struct BaseURLSettingsView: View {
           .keyboardType(.URL)
           .textInputAutocapitalization(.never)
           .autocorrectionDisabled()
+      }
+
+      Section(header: Text("Accent Color")) {
+        Picker("Accent Color", selection: $selectedAccent) {
+          ForEach(AppTheme.AccentChoice.allCases) { choice in
+            HStack {
+              Circle()
+                .fill(AppTheme.color(for: choice))
+                .frame(width: 16, height: 16)
+              Text(choice.displayName)
+            }
+            .tag(choice)
+          }
+        }
       }
 
       Section(footer: Text("Include the full scheme, for example: http://team9.local:8000")) {
@@ -40,6 +55,7 @@ struct BaseURLSettingsView: View {
 
   private func save() {
     APIConfig.baseURL = baseURL
+    AppTheme.accentChoice = selectedAccent
     onSave?()
   }
 }
