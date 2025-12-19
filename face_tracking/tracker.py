@@ -10,11 +10,12 @@ import os
 import websocket
 from face_tracking.client import Client
 
+
 class FaceTracker:
     def __init__(self):
         self.pan_pwm, self.tilt_pwm = setup_servo()
         self.pan_angle = 90  # Initial angle
-        self.tilt_angle = 50  # Initial angle
+        self.tilt_angle = 70  # Initial angle
         self.move_to(self.pan_angle, self.tilt_angle)
         self.pan_pwm.ChangeDutyCycle(angle_to_duty_cycle(self.pan_angle))
         self.tilt_pwm.ChangeDutyCycle(angle_to_duty_cycle(self.tilt_angle))
@@ -30,7 +31,7 @@ class FaceTracker:
             frame_width=640,
             frame_height=480
         )
-        self.controller = PIDController(kp=0.006, ki=0.0003, kd=0.001)
+        self.controller = PIDController(kp=0.03, ki=0, kd=0)
         self.sliding_window = []
         
     def smooth_move(self, current, target, pwm, steps=20, delay=0.01):
@@ -150,11 +151,11 @@ if __name__ == '__main__':
 
 def tracker_task(stop_event, picamera2):
     """Thread loop, controlled by stop_event"""
-    #tracker = FaceTracker()
+    tracker = FaceTracker()
     ws = websocket.WebSocket()
     ws.connect("ws://jasondemacbook.local:8765")
 
-    time.sleep(3)
+    time.sleep(1)
 
     #picamera2 = init_camera()
 
@@ -169,7 +170,7 @@ def tracker_task(stop_event, picamera2):
             Client(frame, ws)
             
             frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-            #tracker.track(frame_rgb)
+            tracker.track(frame_rgb)
             
 
     except Exception as e:

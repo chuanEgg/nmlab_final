@@ -12,6 +12,13 @@ import face_tracking.client
 from picamera2 import Picamera2
 import cv2
 
+from luma.core.interface.serial import i2c
+from luma.oled.device import sh1106
+from PIL import Image, ImageDraw, ImageFont
+import time
+import random
+
+
 def calculate_level(score):
     return math.floor((-1 + math.sqrt(1 + 0.16 * score)) / 2)
 app = Flask(__name__)
@@ -169,7 +176,7 @@ def toggle_button():
         task_thread = threading.Thread(target=tracker_task, args=(stop_event,picamera2))
         #task_thread = threading.Thread(target=long_task)
         task_thread.start()
-        #start_session_internal("Allen")
+        start_session_internal("Allen")
         return jsonify({"msg": "Tracker started"}), 202
 
     else:
@@ -177,8 +184,8 @@ def toggle_button():
         if task_thread is not None:
             task_thread.join()   # 等 thread 結束
 
-        #stop_session_internal("Allen")
-        #append_score_internal("Allen", random.randint(50, 100))
+        stop_session_internal("Allen")
+        append_score_internal("Allen", random.randint(50, 100))
         face_tracking.client.tracking_status = "Not Running!"
         with open("face_tracking/latest.jpg", "wb") as f, open("face_tracking/pika.jpg", "rb") as pika:
             f.write(pika.read())
@@ -248,10 +255,63 @@ def append_score_internal(username, score_value):
         }
     )
 
+def oled_worker(device):
+    # Load fonts
+    try:
+        font_large = ImageFont.truetype("/usr/share/fonts/truetype/piboto/Piboto-Bold.ttf", 14)
+        font_small = ImageFont.truetype("/usr/share/fonts/truetype/piboto/Piboto-Regular.ttf", 12)
+    except IOError:
+        font_large = ImageFont.load_default()
+        font_small = ImageFont.load_default()
+
+    tz_utc8 = timezone(timedelta(hours=8))
+
+    while True:
+        image = Image.new("1", device.size)
+        draw = ImageDraw.Draw(image)
+        
+        now = datetime.now(tz_utc8).strftime("%H:%M:%S")
+        
+        # Draw Time at the top
+        draw.text((0, 0), f"Time: {now}", font=font_small, fill=255)
+        
+        if button_status == 1:
+            text = "Get Focus NOW"
+            try:
+                bbox = draw.textbbox((0, 0), text, font=font_large)
+                w = bbox[2] - bbox[0]
+                h = bbox[3] - bbox[1]
+            except AttributeError:
+                w, h = draw.textsize(text, font=font_large)
+            
+            x = (device.width - w) // 2
+            y = (device.height - h) // 2 + 8
+            draw.text((x, y), text, font=font_large, fill=255)
+        else:
+            text = "Ready to Focus"
+            try:
+                bbox = draw.textbbox((0, 0), text, font=font_large)
+                w = bbox[2] - bbox[0]
+                h = bbox[3] - bbox[1]
+            except AttributeError:
+                w, h = draw.textsize(text, font=font_large)
+            
+            x = (device.width - w) // 2
+            y = (device.height - h) // 2 + 8
+            draw.text((x, y), text, font=font_large, fill=255)
+        
+        device.display(image)
+        time.sleep(1)
+
 if __name__ == '__main__':
     picamera2 = Picamera2()
     config = picamera2.create_preview_configuration(main={"format": "RGB888", "size": (800, 600)})
     picamera2.configure(config)
     picamera2.start()
+    serial = i2c(port=1, address=0x3C)
+    device = sh1106(serial, width=128, height=64)
+    
+    oled_thread = threading.Thread(target=oled_worker, args=(device,), daemon=True)
+    oled_thread.start()
 
     app.run(host='0.0.0.0', port=8000)
