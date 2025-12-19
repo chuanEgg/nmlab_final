@@ -130,7 +130,8 @@ struct UserDataView: View {
   @ViewBuilder
   private func focusSummaryLabel(for data: FocusData) -> some View {
     HStack {
-      Image(systemName: "graduationcap.circle")
+//      Image(systemName: "graduationcap.circle")
+      Image(systemName: "person.crop.circle")
         .resizable()
         .scaledToFit()
         .frame(maxHeight: 50)

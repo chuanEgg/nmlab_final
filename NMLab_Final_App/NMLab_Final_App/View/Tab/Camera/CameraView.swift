@@ -16,6 +16,8 @@ struct CameraView: View {
   @State private var latestPhoto: UIImage?
   @State private var isLoadingPhoto = false
   @State private var shouldStopAutoRefresh = false
+  @State private var lastSessionDurationText: String?
+  @State private var lastSessionScore: Int?
   @State private var activeStartAt: Date?
   @State private var elapsedDisplay: String = "—"
   // Default user for fetching active session start; adjust if user selection is added.
@@ -89,6 +91,7 @@ struct CameraView: View {
     VStack(alignment: .leading, spacing: 8) {
       HStack(alignment: .firstTextBaseline, spacing: 8) {
         Image(systemName: "face.smiling")
+          .foregroundStyle(.secondary)
         Text(statusMessage)
           .font(.headline.weight(.semibold))
           .foregroundStyle(.primary)
@@ -104,6 +107,33 @@ struct CameraView: View {
           .font(.headline.weight(.semibold))
           .foregroundStyle(.primary)
         Spacer()
+      }
+
+      if let duration = lastSessionDurationText {
+        Divider()
+        VStack(alignment: .leading, spacing: 6) {
+          HStack(alignment: .firstTextBaseline, spacing: 8) {
+            Image(systemName: "flag.checkered")
+              .foregroundStyle(.secondary)
+            Text("Last session: \(duration)")
+              .font(.headline.weight(.semibold))
+              .foregroundStyle(.primary)
+            Spacer()
+          }
+
+          Divider()
+
+          if let score = lastSessionScore {
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+              Image(systemName: "rosette")
+                .foregroundStyle(.secondary)
+              Text("Score: \(score)")
+                .font(.headline.weight(.semibold))
+                .foregroundStyle(.primary)
+              Spacer()
+            }
+          }
+        }
       }
     }
     .padding()
@@ -243,6 +273,12 @@ extension CameraView {
           status = newStatus
           statusMessage = "Fetching tracker status..."
           syncActiveStart(from: newStatus)
+          if newStatus.buttonStatus == 0 {
+            Task { await fetchLatestCompletedSessionSummary() }
+          } else {
+            lastSessionDurationText = nil
+            lastSessionScore = nil
+          }
           Task { await loadTrackerStatusMessage() }
         case .failure(let error):
           statusMessage = error.localizedDescription
@@ -268,6 +304,12 @@ extension CameraView {
           status = newStatus
           statusMessage = "Toggled successfully"
           syncActiveStart(from: newStatus)
+          if newStatus.buttonStatus == 0 {
+            Task { await fetchLatestCompletedSessionSummary() }
+          } else {
+            lastSessionDurationText = nil
+            lastSessionScore = nil
+          }
         case .failure(let error):
           statusMessage = error.localizedDescription
         }
@@ -328,6 +370,25 @@ extension CameraView {
           }
         case .failure:
           continuation.resume(returning: nil)
+        }
+      }
+    }
+  }
+
+  func fetchLatestCompletedSessionSummary() async {
+    await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+      getFocusData(user: controlUsername) { result in
+        Task { @MainActor in
+          defer { continuation.resume() }
+          switch result {
+          case .success(let data):
+            let summary = latestCompletedSessionSummary(from: data)
+            lastSessionDurationText = summary.duration
+            lastSessionScore = summary.score
+          case .failure:
+            lastSessionDurationText = nil
+            lastSessionScore = nil
+          }
         }
       }
     }

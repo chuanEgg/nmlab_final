@@ -35,7 +35,7 @@ struct BaseURLSettingsView: View {
         .tint(.red)
       }
     }
-    .navigationTitle("API Settings")
+    .navigationTitle("Settings")
   }
 
   private func save() {
