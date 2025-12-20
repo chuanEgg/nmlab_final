@@ -35,14 +35,14 @@ python3 app.py
 
 
 ### App
-1. If you have installed Xcode:\\
+1. If you have installed Xcode:
     a. Open NMLab_Final_App.xcodeproj
-    b. Change the Signing Team / Bundle Identifier in project settings if necessary.\\
-    c. Build the project on device / simulator via Xcode.\\
-2. If you have NOT installed Xcode:\\
-    a. Install "TestFlight" on your device (iOS / iPadOS 18.0+), link: https://apps.apple.com/tw/app/testflight/id899247664\\
-    b. Open the link: https://testflight.apple.com/join/HArqB6Px to join the public testing group.\\
-    c. Install the app on TestFlight.\\
+    b. Change the Signing Team / Bundle Identifier in project settings if necessary.
+    c. Build the project on device / simulator via Xcode.
+2. If you have NOT installed Xcode:
+    a. Install "TestFlight" on your device (iOS / iPadOS 18.0+), link: https://apps.apple.com/tw/app/testflight/id899247664
+    b. Open the link: https://testflight.apple.com/join/HArqB6Px to join the public testing group.
+    c. Install the app on TestFlight.
 
 ## Overview
 ![NMLab - Final Poster](https://hackmd.io/_uploads/r1kkU3z7-g.png)
