@@ -10,6 +10,8 @@ B12901184 謝承哲
 ## About this Project
 This is the final project of Network and Multimedia Lab (114-1). We tackles digital distraction in study environments, where fragmented attention reduces efficiency. Unlike existing tools that rely only on screen activity, our system quantifies actual focus time and incorporates social and interactive elements to make staying focused more engaging and effective.
 
+![NMLab - Final Poster](doc/poster.png)
+
 
 ## Setup
 ### Hardware
@@ -43,7 +45,3 @@ python3 app.py
     a. Install "TestFlight" on your device (iOS / iPadOS 18.0+), link: https://apps.apple.com/tw/app/testflight/id899247664
     b. Open the link: https://testflight.apple.com/join/HArqB6Px to join the public testing group.
     c. Install the app on TestFlight.
-
-## Overview
-![NMLab - Final Poster](https://hackmd.io/_uploads/r1kkU3z7-g.png)
-
