@@ -8,7 +8,7 @@ B12901049 陳泓安
 B12901184 謝承哲
 
 ## About this Project
-This is the final project of Network and Multimedia Lab (114-1).
+This is the final project of Network and Multimedia Lab (114-1). We tackles digital distraction in study environments, where fragmented attention reduces efficiency. Unlike existing tools that rely only on screen activity, our system quantifies actual focus time and incorporates social and interactive elements to make staying focused more engaging and effective.
 
 
 ## Setup
